@@ -121,12 +121,14 @@ router.get('/:id/projection', async (req, res) => {
 
     for (let month = 1; month <= Math.min(debt.remaining_months, 24); month++) {
       const interestPayment = balance * monthlyRate;
-      const capitalPayment = parseFloat(debt.monthly_payment) - interestPayment;
-      balance = Math.max(0, balance - capitalPayment);
+      let capitalPayment = parseFloat(debt.monthly_payment) - interestPayment;
+      if (capitalPayment > balance) capitalPayment = balance;
+      const actualPayment = capitalPayment + interestPayment;
+      balance -= capitalPayment;
 
       projection.push({
         month,
-        payment: parseFloat(debt.monthly_payment),
+        payment: Math.round(actualPayment * 100) / 100,
         capital: Math.round(capitalPayment * 100) / 100,
         interest: Math.round(interestPayment * 100) / 100,
         balance: Math.round(balance * 100) / 100
