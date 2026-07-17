@@ -24,6 +24,13 @@ router.get('/cash-flow', async (req, res) => {
       .sum('amount as total')
       .first();
 
+    const fourPerThousand = await db('expenses')
+      .where('user_id', req.user.id)
+      .where('apply_four_per_thousand', true)
+      .whereRaw('EXTRACT(MONTH FROM date) = ? AND EXTRACT(YEAR FROM date) = ?', [targetMonth, targetYear])
+      .sum('four_per_thousand_amount as total')
+      .first();
+
     const debtPayments = await db('debt_payments')
       .join('debts', 'debt_payments.debt_id', 'debts.id')
       .where('debts.user_id', req.user.id)
@@ -43,13 +50,15 @@ router.get('/cash-flow', async (req, res) => {
     const totalExpenses = parseFloat(expenses.total || 0);
     const totalDebtPayments = parseFloat(debtPayments.total || 0);
     const totalSavingsDeposits = parseFloat(savingsDeposits.total || 0);
+    const totalFourPerThousand = parseFloat(fourPerThousand.total || 0);
 
-    const netFlow = totalIncome - totalExpenses - totalDebtPayments - totalSavingsDeposits;
+    const netFlow = totalIncome - totalExpenses - totalDebtPayments - totalSavingsDeposits - totalFourPerThousand;
 
     res.json({
       period: { month: targetMonth, year: targetYear },
       income: totalIncome,
       expenses: totalExpenses,
+      four_per_thousand: totalFourPerThousand,
       debt_payments: totalDebtPayments,
       savings_deposits: totalSavingsDeposits,
       net_flow: netFlow
@@ -79,11 +88,19 @@ router.get('/monthly-evolution', async (req, res) => {
         .sum('amount as total')
         .first();
 
+      const fourPerThousand = await db('expenses')
+        .where('user_id', req.user.id)
+        .where('apply_four_per_thousand', true)
+        .whereRaw('EXTRACT(MONTH FROM date) = ? AND EXTRACT(YEAR FROM date) = ?', [month, targetYear])
+        .sum('four_per_thousand_amount as total')
+        .first();
+
       monthlyData.push({
         month,
         income: parseFloat(incomes.total || 0),
         expenses: parseFloat(expenses.total || 0),
-        net: parseFloat(incomes.total || 0) - parseFloat(expenses.total || 0)
+        four_per_thousand: parseFloat(fourPerThousand.total || 0),
+        net: parseFloat(incomes.total || 0) - parseFloat(expenses.total || 0) - parseFloat(fourPerThousand.total || 0)
       });
     }
 

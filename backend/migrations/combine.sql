@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   type VARCHAR(50) DEFAULT 'variable' CHECK (type IN ('fixed', 'variable')),
   recurring BOOLEAN DEFAULT FALSE,
   recurrence_type VARCHAR(50) CHECK (recurrence_type IN ('monthly', 'weekly', 'yearly')),
+  apply_four_per_thousand BOOLEAN DEFAULT FALSE,
+  four_per_thousand_amount NUMERIC(12,2),
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

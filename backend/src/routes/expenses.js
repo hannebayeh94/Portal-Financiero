@@ -44,7 +44,19 @@ router.get('/summary', async (req, res) => {
       .sum('amount as total')
       .first();
 
-    res.json({ total: result.total || 0, month: targetMonth, year: targetYear });
+    const fourPerThousandResult = await db('expenses')
+      .where('user_id', req.user.id)
+      .where('apply_four_per_thousand', true)
+      .whereRaw('EXTRACT(MONTH FROM date) = ? AND EXTRACT(YEAR FROM date) = ?', [targetMonth, targetYear])
+      .sum('four_per_thousand_amount as total')
+      .first();
+
+    res.json({
+      total: result.total || 0,
+      four_per_thousand_total: fourPerThousandResult.total || 0,
+      month: targetMonth,
+      year: targetYear
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener resumen' });
   }
@@ -72,12 +84,19 @@ router.get('/by-category', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { amount, description, date, category_id, type, recurring, recurrence_type } = req.body;
+    const { amount, description, date, category_id, type, recurring, recurrence_type, apply_four_per_thousand } = req.body;
+
+    const four_per_thousand_amount = apply_four_per_thousand
+      ? Math.round(parseFloat(amount) * 0.004 * 100) / 100
+      : null;
 
     const [expense] = await db('expenses')
       .insert({
         amount, description, date, category_id, type,
-        recurring, recurrence_type, user_id: req.user.id
+        recurring, recurrence_type,
+        apply_four_per_thousand: apply_four_per_thousand || false,
+        four_per_thousand_amount,
+        user_id: req.user.id
       })
       .returning('*');
 
@@ -90,11 +109,21 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { amount, description, date, category_id, type, recurring, recurrence_type } = req.body;
+    const { amount, description, date, category_id, type, recurring, recurrence_type, apply_four_per_thousand } = req.body;
+
+    const four_per_thousand_amount = apply_four_per_thousand
+      ? Math.round(parseFloat(amount) * 0.004 * 100) / 100
+      : null;
 
     const [expense] = await db('expenses')
       .where({ id, user_id: req.user.id })
-      .update({ amount, description, date, category_id, type, recurring, recurrence_type, updated_at: db.fn.now() })
+      .update({
+        amount, description, date, category_id, type,
+        recurring, recurrence_type,
+        apply_four_per_thousand: apply_four_per_thousand || false,
+        four_per_thousand_amount,
+        updated_at: db.fn.now()
+      })
       .returning('*');
 
     if (!expense) {

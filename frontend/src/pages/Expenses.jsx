@@ -24,6 +24,7 @@ export default function Expenses() {
     type: 'variable',
     recurring: false,
     recurrence_type: 'monthly',
+    apply_four_per_thousand: false,
   })
 
   const fetchExpenses = async () => {
@@ -69,6 +70,7 @@ export default function Expenses() {
       type: expense.type,
       recurring: expense.recurring,
       recurrence_type: expense.recurrence_type || 'monthly',
+      apply_four_per_thousand: expense.apply_four_per_thousand,
     })
     setShowModal(true)
   }
@@ -92,12 +94,16 @@ export default function Expenses() {
       type: 'variable',
       recurring: false,
       recurrence_type: 'monthly',
+      apply_four_per_thousand: false,
     })
   }
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
   const fixedExpenses = expenses.filter(e => e.type === 'fixed').reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
   const variableExpenses = expenses.filter(e => e.type === 'variable').reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
+  const fourPerThousandTotal = expenses
+    .filter(e => e.apply_four_per_thousand)
+    .reduce((sum, exp) => sum + parseFloat(exp.four_per_thousand_amount || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -134,6 +140,11 @@ export default function Expenses() {
             <span className="text-dark-500">
               Variables: <span className="font-semibold">{formatCurrency(variableExpenses)}</span>
             </span>
+            {fourPerThousandTotal > 0 && (
+              <span className="text-dark-500">
+                4×1000: <span className="font-semibold text-warning-600">{formatCurrency(fourPerThousandTotal)}</span>
+              </span>
+            )}
           </div>
         </div>
         <button
@@ -183,6 +194,7 @@ export default function Expenses() {
                   <th className="table-header">Descripción</th>
                   <th className="table-header">Tipo</th>
                   <th className="table-header">Monto</th>
+                  <th className="table-header">4×1000</th>
                   <th className="table-header">Recurrente</th>
                   <th className="table-header text-right">Acciones</th>
                 </tr>
@@ -198,6 +210,15 @@ export default function Expenses() {
                       </span>
                     </td>
                     <td className="table-cell font-bold text-danger-600">{formatCurrency(expense.amount)}</td>
+                    <td className="table-cell">
+                      {expense.apply_four_per_thousand ? (
+                        <span className="text-xs font-medium text-warning-600">
+                          {formatCurrency(expense.four_per_thousand_amount)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-dark-400">—</span>
+                      )}
+                    </td>
                     <td className="table-cell">
                       {expense.recurring ? (
                         <span className="badge badge-success">Sí</span>
@@ -252,6 +273,23 @@ export default function Expenses() {
                     className="input-field pl-8 text-lg font-semibold"
                   />
                 </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-warning-50 rounded-xl border border-warning-200">
+                <input
+                  type="checkbox"
+                  id="apply_four_per_thousand"
+                  checked={formData.apply_four_per_thousand}
+                  onChange={(e) => setFormData({ ...formData, apply_four_per_thousand: e.target.checked })}
+                  className="w-5 h-5 text-warning-600 border-dark-300 rounded focus:ring-warning-500"
+                />
+                <label htmlFor="apply_four_per_thousand" className="text-sm font-medium text-dark-700 flex-1">
+                  Aplicar 4×1000 (GMF)
+                </label>
+                {formData.apply_four_per_thousand && formData.amount && (
+                  <span className="text-sm font-bold text-warning-600">
+                    {formatCurrency(parseFloat(formData.amount) * 0.004)}
+                  </span>
+                )}
               </div>
               <div>
                 <label className="input-label">Descripción</label>
