@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, RefreshControl } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
-import { colors } from '../theme'
-import { formatCurrency, getMonthName, getCurrentMonth, getCurrentYear } from '../utils/formatters'
+import { clay, colors } from '../theme'
+import { formatCurrency, getMonthName, getCurrentMonth } from '../utils/formatters'
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -36,71 +37,166 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData() }, [])
 
+  const handleLogout = () => {
+    Alert.alert('Cerrar sesión', '¿Estás seguro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: logout },
+    ])
+  }
+
   const totalIncome = incomeSummary?.total || 0
   const totalExpenses = expenseSummary?.total || 0
   const balance = totalIncome - totalExpenses
-  const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : '0.0'
 
-  const currentMonth = getMonthName(getCurrentMonth())
+  const currentMonthName = getMonthName(getCurrentMonth())
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: '#f0e8dc' }}
-      contentContainerStyle={{ padding: 16, gap: 14 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData() }} colors={[colors.primary[500]]} />}
+      style={{ flex: 1, backgroundColor: clay.bg }}
+      contentContainerStyle={{ paddingBottom: 24 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData() }}
+          colors={[colors.primary[500]]} tintColor={colors.primary[500]} />
+      }
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, marginTop: 8 }}>
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+        paddingHorizontal: 20, paddingTop: 56, paddingBottom: 8,
+        backgroundColor: clay.card,
+        borderBottomWidth: 1, borderBottomColor: clay.highlight,
+        shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
+      }}>
         <View>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.dark[900] }}>Dashboard</Text>
-          <Text style={{ fontSize: 13, color: colors.dark[500] }}>{currentMonth}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: clay.textMuted, letterSpacing: 0.3 }}>
+            {currentMonthName}
+          </Text>
+          <Text style={{ fontSize: 28, fontWeight: '800', color: clay.text, marginTop: 2, letterSpacing: -0.5 }}>
+            {user?.name?.split(' ')[0] || 'Usuario'}
+          </Text>
         </View>
-        <Text style={{ fontSize: 13, color: colors.clay.textMuted }}>{user?.name}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{
+            backgroundColor: clay.card, borderRadius: 16, padding: 10,
+            shadowColor: clay.shadow, shadowOffset: { width: 3, height: 3 },
+            shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
+          }}>
+            <Ionicons name="notifications-outline" size={22} color={clay.textMuted} />
+          </View>
+          <TouchableOpacity onPress={handleLogout} style={{
+            backgroundColor: '#e8ddd0', borderRadius: 16, padding: 10,
+            shadowColor: clay.shadow, shadowOffset: { width: 3, height: 3 },
+            shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
+          }}>
+            <Ionicons name="log-out-outline" size={22} color={colors.danger[400]} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ClayCard>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 }}>Balance Neto</Text>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: balance >= 0 ? colors.success[500] : colors.danger[500] }}>
-          {formatCurrency(balance)}
-        </Text>
-        <Text style={{ fontSize: 12, color: colors.clay.textMuted, marginTop: 2 }}>Tasa de ahorro: {savingsRate}%</Text>
-      </ClayCard>
+      {/* Content */}
+      <View style={{ padding: 16, gap: 14, marginTop: 4 }}>
 
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <ClayCard style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Ingresos</Text>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.success[500], marginTop: 4 }}>{formatCurrency(totalIncome)}</Text>
-        </ClayCard>
-        <ClayCard style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }}>Egresos</Text>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger[400], marginTop: 4 }}>{formatCurrency(totalExpenses)}</Text>
-        </ClayCard>
-      </View>
-
-      {debtStatus && (
+        {/* Balance Card */}
         <ClayCard>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 }}>Deudas Activas</Text>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: colors.danger[500] }}>
-            {formatCurrency(debtStatus.total_debt)}
+          <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 }}>
+            Balance Neto
           </Text>
-          <Text style={{ fontSize: 12, color: colors.clay.textMuted, marginTop: 2 }}>
-            Pago mensual: {formatCurrency(debtStatus.total_monthly_payment)}
+          <Text style={{ fontSize: 34, fontWeight: '800', color: balance >= 0 ? colors.success[400] : colors.danger[400], letterSpacing: -1 }}>
+            {formatCurrency(balance)}
           </Text>
+          <View style={{ height: 2, backgroundColor: '#e0d4c8', marginVertical: 10 }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View>
+              <Text style={{ fontSize: 11, color: clay.textMuted }}>Ingresos</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.success[400] }}>{formatCurrency(totalIncome)}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: 11, color: clay.textMuted }}>Egresos</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.danger[400] }}>{formatCurrency(totalExpenses)}</Text>
+            </View>
+          </View>
         </ClayCard>
-      )}
 
-      {monthlyData?.data && (
-        <ClayCard>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>Evolución Mensual</Text>
-          {monthlyData.data.slice(-4).reverse().map((m) => (
-            <View key={m.month} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#e0d4c8' }}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.dark[700] }}>{getMonthName(m.month)}</Text>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: m.net >= 0 ? colors.success[500] : colors.danger[400] }}>
-                {formatCurrency(m.net)}
+        {/* Quick Stats */}
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          {[
+            { label: 'Ingresos', value: formatCurrency(totalIncome), color: colors.success[400], icon: 'trending-up-outline' },
+            { label: 'Egresos', value: formatCurrency(totalExpenses), color: colors.danger[400], icon: 'trending-down-outline' },
+          ].map((stat) => (
+            <ClayCard key={stat.label} small style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Ionicons name={stat.icon} size={16} color={stat.color} />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {stat.label}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: stat.color, letterSpacing: -0.5 }}>
+                {stat.value}
+              </Text>
+            </ClayCard>
+          ))}
+        </View>
+
+        {/* Debt Status */}
+        {debtStatus && parseFloat(debtStatus.total_debt) > 0 && (
+          <ClayCard>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <Ionicons name="card-outline" size={18} color={colors.danger[400]} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                Deudas Activas
               </Text>
             </View>
-          ))}
-        </ClayCard>
-      )}
+            <Text style={{ fontSize: 24, fontWeight: '800', color: colors.danger[400], letterSpacing: -0.5 }}>
+              {formatCurrency(debtStatus.total_debt)}
+            </Text>
+            <Text style={{ fontSize: 13, color: clay.textMuted, marginTop: 2 }}>
+              Pago mensual: {formatCurrency(debtStatus.total_monthly_payment)}
+            </Text>
+          </ClayCard>
+        )}
+
+        {/* Monthly Evolution */}
+        {monthlyData?.data && (
+          <ClayCard>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Ionicons name="stats-chart-outline" size={18} color={colors.primary[500]} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                Evolución Mensual
+              </Text>
+            </View>
+            {monthlyData.data.slice(-4).reverse().map((m, i) => {
+              const isPositive = m.net >= 0
+              return (
+                <View key={m.month} style={{
+                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                  paddingVertical: 10,
+                  borderBottomWidth: i < 3 ? 1 : 0,
+                  borderBottomColor: '#e0d4c8',
+                }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: clay.text }}>
+                    {getMonthName(m.month)}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons
+                      name={isPositive ? 'caret-up' : 'caret-down'}
+                      size={14}
+                      color={isPositive ? colors.success[400] : colors.danger[400]}
+                    />
+                    <Text style={{
+                      fontSize: 15, fontWeight: '800',
+                      color: isPositive ? colors.success[400] : colors.danger[400],
+                    }}>
+                      {formatCurrency(Math.abs(m.net))}
+                    </Text>
+                  </View>
+                </View>
+              )
+            })}
+          </ClayCard>
+        )}
+
+      </View>
     </ScrollView>
   )
 }

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
-import { colors } from '../theme'
+import { clay, colors } from '../theme'
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('')
@@ -22,7 +23,7 @@ export default function Login({ navigation }) {
       await login(email, password)
     } catch (error) {
       const msg = error.response?.data?.error
-        || (error.code === 'ECONNABORTED' ? 'El servidor está iniciando, intenta de nuevo en unos segundos' : null)
+        || (error.code === 'ECONNABORTED' ? 'El servidor está iniciando, intenta de nuevo' : null)
         || 'Error al iniciar sesión. Verifica tu conexión'
       Alert.alert('Error', msg)
     } finally {
@@ -32,18 +33,39 @@ export default function Login({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#f0e8dc' }}
+      style={{ flex: 1, backgroundColor: clay.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
-        <View style={{ backgroundColor: colors.clay.card, borderRadius: 24, padding: 28, shadowColor: colors.clay.shadow, shadowOffset: { width: 8, height: 8 }, shadowOpacity: 0.6, shadowRadius: 16, elevation: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)' }}>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: colors.dark[900], marginBottom: 4, fontFamily: Platform.OS === 'ios' ? 'Georgia' : undefined }}>
-            Iniciar Sesión
+        {/* Logo */}
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
+          <View style={{
+            width: 72, height: 72, borderRadius: 24,
+            backgroundColor: clay.card,
+            justifyContent: 'center', alignItems: 'center',
+            shadowColor: clay.shadow, shadowOffset: { width: 6, height: 6 },
+            shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
+            borderWidth: 1, borderColor: clay.highlight,
+            marginBottom: 16,
+          }}>
+            <Text style={{ fontSize: 32 }}>💰</Text>
+          </View>
+          <Text style={{ fontSize: 26, fontWeight: '800', color: clay.text, letterSpacing: -0.5 }}>
+            Portal Financiero
           </Text>
-          <Text style={{ fontSize: 14, color: colors.dark[500], marginBottom: 28 }}>
-            Ingresa tus credenciales
+          <Text style={{ fontSize: 14, color: clay.textMuted, marginTop: 4 }}>
+            Administra tus finanzas personales
           </Text>
+        </View>
 
+        {/* Login Card */}
+        <View style={{
+          backgroundColor: clay.card, borderRadius: 28,
+          padding: 24,
+          shadowColor: clay.shadow, shadowOffset: { width: 8, height: 8 },
+          shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
+          borderWidth: 1, borderColor: clay.highlight,
+        }}>
           <View style={{ gap: 18 }}>
             <ClayInput
               label="Correo Electrónico"
@@ -61,19 +83,17 @@ export default function Login({ navigation }) {
               secureTextEntry={!showPassword}
               rightElement={
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary[500], letterSpacing: 0.5 }}>
-                    {showPassword ? 'OCULTAR' : 'MOSTRAR'}
-                  </Text>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.dark[400]} />
                 </TouchableOpacity>
               }
             />
-            <ClayButton title="Iniciar Sesión" onPress={handleSubmit} loading={loading} style={{ marginTop: 8 }} />
+            <ClayButton title="Iniciar Sesión" onPress={handleSubmit} loading={loading} style={{ marginTop: 4 }} />
           </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Register')} style={{ marginTop: 20, alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, color: colors.dark[500] }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')} style={{ marginTop: 20, alignItems: 'center', paddingVertical: 4 }}>
+            <Text style={{ fontSize: 13, color: clay.textMuted }}>
               ¿No tienes cuenta?{' '}
-              <Text style={{ fontWeight: '700', color: colors.primary[600] }}>Regístrate aquí</Text>
+              <Text style={{ fontWeight: '700', color: colors.primary[500] }}>Regístrate</Text>
             </Text>
           </TouchableOpacity>
         </View>
