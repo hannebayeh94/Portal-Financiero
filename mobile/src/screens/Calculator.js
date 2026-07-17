@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView } from 'react-native'
 import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
-import { colors } from '../theme'
+import { colors, clay } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
 export default function Calculator() {

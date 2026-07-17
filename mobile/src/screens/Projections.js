@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, Text, ScrollView } from 'react-native'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
-import { colors } from '../theme'
+import { colors, clay } from '../theme'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 
 export default function Projections() {
