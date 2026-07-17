@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Portal Financiero",
+    "slug": "portal-financiero",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.portalfinanciero.app"
+    },
+    "android": {
+      "package": "com.portalfinanciero.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#f5ebe0",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications"
+    ]
+  }
+}
