@@ -3,6 +3,7 @@ import api from '../services/api'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline'
+import ClayToggle from '../components/ClayToggle'
 
 const MONTHS = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -274,19 +275,15 @@ export default function Expenses() {
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-warning-50 rounded-xl border border-warning-200">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-3 p-4 bg-warning-50/60 rounded-xl border border-warning-200">
+                <ClayToggle
                   id="apply_four_per_thousand"
                   checked={formData.apply_four_per_thousand}
-                  onChange={(e) => setFormData({ ...formData, apply_four_per_thousand: e.target.checked })}
-                  className="w-5 h-5 text-warning-600 border-dark-300 rounded focus:ring-warning-500"
+                  onChange={(val) => setFormData({ ...formData, apply_four_per_thousand: val })}
+                  label="Aplicar 4×1000 (GMF)"
                 />
-                <label htmlFor="apply_four_per_thousand" className="text-sm font-medium text-dark-700 flex-1">
-                  Aplicar 4×1000 (GMF)
-                </label>
                 {formData.apply_four_per_thousand && formData.amount && (
-                  <span className="text-sm font-bold text-warning-600">
+                  <span className="text-sm font-bold text-warning-600 flex-shrink-0 ml-auto">
                     {formatCurrency(parseFloat(formData.amount) * 0.004)}
                   </span>
                 )}
@@ -323,17 +320,13 @@ export default function Expenses() {
                   <option value="variable">Variable</option>
                 </select>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-dark-50 rounded-xl">
-                <input
-                  type="checkbox"
+              <div className="flex items-center p-4 bg-[#e8ddd0] rounded-xl shadow-clay-inset">
+                <ClayToggle
                   id="recurring"
                   checked={formData.recurring}
-                  onChange={(e) => setFormData({ ...formData, recurring: e.target.checked })}
-                  className="w-5 h-5 text-primary-600 border-dark-300 rounded focus:ring-primary-500"
+                  onChange={(val) => setFormData({ ...formData, recurring: val })}
+                  label="Egreso recurrente"
                 />
-                <label htmlFor="recurring" className="text-sm font-medium text-dark-700">
-                  Egreso recurrente
-                </label>
               </div>
               {formData.recurring && (
                 <div>

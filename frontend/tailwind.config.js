@@ -68,6 +68,7 @@ export default {
       boxShadow: {
         'clay': '8px 8px 16px #d4c4b4, -8px -8px 16px #fff5ea',
         'clay-sm': '4px 4px 8px #d4c4b4, -4px -4px 8px #fff5ea',
+        'clay-inset': 'inset 3px 3px 6px #d4c4b4, inset -3px -3px 6px #fff5ea',
       },
       borderRadius: {
         '2xl': '1rem',

@@ -3,6 +3,7 @@ import api from '../services/api'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline'
+import ClayToggle from '../components/ClayToggle'
 
 const sources = [
   { value: 'salary', label: 'Salario' },
@@ -285,17 +286,13 @@ export default function Incomes() {
                   ))}
                 </select>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-dark-50 rounded-xl">
-                <input
-                  type="checkbox"
+              <div className="flex items-center p-4 bg-[#e8ddd0] rounded-xl shadow-clay-inset">
+                <ClayToggle
                   id="recurring"
                   checked={formData.recurring}
-                  onChange={(e) => setFormData({ ...formData, recurring: e.target.checked })}
-                  className="w-5 h-5 text-primary-600 border-dark-300 rounded focus:ring-primary-500"
+                  onChange={(val) => setFormData({ ...formData, recurring: val })}
+                  label="Ingreso recurrente"
                 />
-                <label htmlFor="recurring" className="text-sm font-medium text-dark-700">
-                  Ingreso recurrente
-                </label>
               </div>
               {formData.recurring && (
                 <div>
