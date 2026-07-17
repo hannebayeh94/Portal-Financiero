@@ -24,10 +24,10 @@ const Tab = createBottomTabNavigator()
 const MoreStack = createNativeStackNavigator()
 
 const tabConfig = [
-  { name: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-  { name: 'Expenses', icon: 'trending-down-outline', activeIcon: 'trending-down' },
-  { name: 'Incomes', icon: 'trending-up-outline', activeIcon: 'trending-up' },
-  { name: 'Más', icon: 'ellipsis-horizontal-circle-outline', activeIcon: 'ellipsis-horizontal-circle' },
+  { name: 'Dashboard', label: 'Inicio', icon: 'grid-outline', activeIcon: 'grid' },
+  { name: 'Expenses', label: 'Egresos', icon: 'trending-down-outline', activeIcon: 'trending-down' },
+  { name: 'Incomes', label: 'Ingresos', icon: 'trending-up-outline', activeIcon: 'trending-up' },
+  { name: 'Más', label: 'Más', icon: 'ellipsis-horizontal-circle-outline', activeIcon: 'ellipsis-horizontal-circle' },
 ]
 
 function MoreStackScreen() {
@@ -56,6 +56,7 @@ function MainTabs() {
               color={focused ? colors.danger[400] : colors.dark[400]}
             />
           ),
+          tabBarLabel: tab?.label || route.name,
           tabBarActiveTintColor: colors.danger[400],
           tabBarInactiveTintColor: colors.dark[400],
           tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
