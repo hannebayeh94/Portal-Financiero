@@ -177,7 +177,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <div className="stat-card animate-slide-up" style={{ animationDelay: '0ms' }}>
           <div className="stat-icon bg-success-100">
             <ArrowTrendingUpIcon className="h-6 w-6 text-success-600" />
@@ -224,6 +224,18 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-dark-500">Total Ahorros</p>
             <p className="text-2xl font-bold text-dark-900">
               {formatCurrency(savingsSummary?.total_balance || 0)}
+            </p>
+          </div>
+        </div>
+
+        <div className="stat-card animate-slide-up" style={{ animationDelay: '200ms' }}>
+          <div className={`stat-icon ${balance >= 0 ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+            <BanknotesIcon className={`h-6 w-6 ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-dark-500">Balance Neto</p>
+            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-dark-900' : 'text-rose-600'}`}>
+              {formatCurrency(balance)}
             </p>
           </div>
         </div>
