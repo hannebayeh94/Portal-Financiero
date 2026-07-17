@@ -4,11 +4,19 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline'
 
+const MONTHS = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+]
+
 export default function Expenses() {
+  const now = new Date()
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -18,13 +26,9 @@ export default function Expenses() {
     recurrence_type: 'monthly',
   })
 
-  useEffect(() => {
-    fetchExpenses()
-  }, [])
-
   const fetchExpenses = async () => {
     try {
-      const res = await api.get('/expenses')
+      const res = await api.get('/expenses', { params: { month: selectedMonth, year: selectedYear } })
       setExpenses(res.data)
     } catch (error) {
       toast.error('Error al cargar egresos')
@@ -32,6 +36,10 @@ export default function Expenses() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchExpenses()
+  }, [selectedMonth, selectedYear])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -96,7 +104,27 @@ export default function Expenses() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-dark-900">Egresos</h1>
-          <div className="flex flex-wrap gap-4 mt-2 text-sm">
+          <div className="flex flex-wrap gap-2 mt-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="input-field !w-auto !py-1 !text-sm font-semibold"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="input-field !w-auto !py-1 !text-sm font-semibold"
+            >
+              {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-4 mt-1 text-sm">
             <span className="text-dark-500">
               Total: <span className="font-semibold text-danger-600">{formatCurrency(totalExpenses)}</span>
             </span>
