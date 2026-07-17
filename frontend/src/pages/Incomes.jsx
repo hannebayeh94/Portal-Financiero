@@ -11,7 +11,13 @@ const sources = [
   { value: 'other', label: 'Otro' },
 ]
 
+const MONTHS = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+]
+
 export default function Incomes() {
+  const now = new Date()
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -19,19 +25,17 @@ export default function Incomes() {
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
-    date: new Date().toISOString().split('T')[0],
+    date: now.toISOString().split('T')[0],
     source: 'salary',
     recurring: false,
     recurrence_type: 'monthly',
   })
-
-  useEffect(() => {
-    fetchIncomes()
-  }, [])
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
 
   const fetchIncomes = async () => {
     try {
-      const res = await api.get('/incomes')
+      const res = await api.get('/incomes', { params: { month: selectedMonth, year: selectedYear } })
       setIncomes(res.data)
     } catch (error) {
       toast.error('Error al cargar ingresos')
@@ -39,6 +43,10 @@ export default function Incomes() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchIncomes()
+  }, [selectedMonth, selectedYear])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -101,8 +109,28 @@ export default function Incomes() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-dark-900">Ingresos</h1>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="input-field !w-auto !py-1 !text-sm font-semibold"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="input-field !w-auto !py-1 !text-sm font-semibold"
+            >
+              {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
           <p className="text-dark-500 mt-1">
-            Total registrado: <span className="font-semibold text-success-600">{formatCurrency(totalIncome)}</span>
+            Total: <span className="font-semibold text-success-600">{formatCurrency(totalIncome)}</span>
           </p>
         </div>
         <button
