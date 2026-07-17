@@ -21,7 +21,7 @@ export default function Calculator() {
     <ScrollView style={{ flex: 1, backgroundColor: '#f0e8dc' }} contentContainerStyle={{ padding: 16, gap: 16 }}>
       <Text style={{ fontSize: 24, fontWeight: '800', color: colors.dark[900] }}>Calculadora</Text>
       <ClayCard>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14 }}>Simular Crédito</Text>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14 }}>Simular Crédito</Text>
         <View style={{ gap: 14 }}>
           <ClayInput label="Monto del préstamo" value={amount} onChangeText={setAmount} placeholder="Ej: 10000000" keyboardType="decimal-pad" />
           <ClayInput label="Tasa de interés anual (%)" value={rate} onChangeText={setRate} placeholder="Ej: 18" keyboardType="decimal-pad" />
@@ -30,7 +30,7 @@ export default function Calculator() {
       </ClayCard>
       {n > 0 && r > 0 && (
         <ClayCard>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>Resultados</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>Resultados</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Cuota mensual</Text><Text style={{ fontWeight: '800', color: colors.primary[500] }}>{formatCurrency(monthly)}</Text></View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Total a pagar</Text><Text style={{ fontWeight: '800', color: colors.danger[400] }}>{formatCurrency(totalPayment)}</Text></View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Total intereses</Text><Text style={{ fontWeight: '800', color: colors.warning[500] }}>{formatCurrency(totalInterest)}</Text></View>
