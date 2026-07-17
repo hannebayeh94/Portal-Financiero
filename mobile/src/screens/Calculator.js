@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { View, Text, ScrollView } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import { colors, clay } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
-export default function Calculator() {
+export default function Calculator({ navigation }) {
   const [amount, setAmount] = useState('')
   const [rate, setRate] = useState('')
   const [months, setMonths] = useState('')
@@ -18,8 +19,17 @@ export default function Calculator() {
   const totalInterest = totalPayment - p
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f0e8dc' }} contentContainerStyle={{ padding: 16, gap: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: '800', color: colors.dark[900] }}>Calculadora</Text>
+    <View style={{ flex: 1, backgroundColor: clay.bg }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+            <Ionicons name="arrow-back" size={22} color={colors.dark[600]} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: clay.textMuted }}>Calculadora</Text>
+        </View>
+        <Text style={{ fontSize: 26, fontWeight: '800', color: clay.text, letterSpacing: -0.5, marginTop: 2 }}>Simular Crédito</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
       <ClayCard>
         <Text style={{ fontSize: 13, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14 }}>Simular Crédito</Text>
         <View style={{ gap: 14 }}>
@@ -37,5 +47,6 @@ export default function Calculator() {
         </ClayCard>
       )}
     </ScrollView>
+    </View>
   )
 }

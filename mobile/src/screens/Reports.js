@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import { clay, colors } from '../theme'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 
-export default function Reports() {
+export default function Reports({ navigation }) {
   const [cashFlow, setCashFlow] = useState(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => { api.get('/reports/cash-flow').then(r => setCashFlow(r.data)).catch(() => {}).finally(() => setLoading(false)) }, [])
@@ -15,7 +15,12 @@ export default function Reports() {
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: clay.textMuted }}>Reportes</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+              <Ionicons name="arrow-back" size={22} color={colors.dark[600]} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: clay.textMuted }}>Reportes</Text>
+          </View>
           <Text style={{ fontSize: 26, fontWeight: '800', color: clay.text, letterSpacing: -0.5, marginTop: 2 }}>Flujo de Caja</Text>
         </View>
         <View style={{ padding: 16, gap: 10 }}>
