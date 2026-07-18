@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
+import { dialog } from '../components/ConfirmDialog'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import GradientCard from '../components/GradientCard'
@@ -18,18 +19,18 @@ export default function Register({ navigation }) {
 
   const handleSubmit = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Todos los campos son obligatorios')
+      dialog.alert('Error', 'Todos los campos son obligatorios')
       return
     }
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden')
+      dialog.alert('Error', 'Las contraseñas no coinciden')
       return
     }
     setLoading(true)
     try {
       await register(email, password, name)
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.error || 'Error al registrar')
+      dialog.alert('Error', error.response?.data?.error || 'Error al registrar')
     } finally {
       setLoading(false)
     }

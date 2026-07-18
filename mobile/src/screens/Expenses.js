@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
@@ -7,6 +7,8 @@ import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
@@ -15,6 +17,7 @@ const currentYear = new Date().getFullYear()
 
 export default function Expenses() {
   const now = new Date()
+  const kb = useKeyboardHeight()
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -42,11 +45,11 @@ export default function Expenses() {
   })
 
   const handleSubmit = async () => {
-    if (!formData.amount || !formData.description) { Alert.alert('Error', 'Completa los campos requeridos'); return }
+    if (!formData.amount || !formData.description) { dialog.alert('Error', 'Completa los campos requeridos'); return }
     try {
       editing ? await api.put(`/expenses/${editing.id}`, formData) : await api.post('/expenses', formData)
       setShowModal(false); setEditing(null); resetForm(); fetchExpenses()
-    } catch (e) { Alert.alert('Error', 'Error al guardar egreso') }
+    } catch (e) { dialog.alert('Error', 'Error al guardar egreso') }
   }
 
   const handleEdit = (exp) => {
@@ -60,10 +63,13 @@ export default function Expenses() {
   }
 
   const handleDelete = (id) => {
-    Alert.alert('Eliminar', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => { await api.delete(`/expenses/${id}`); fetchExpenses() }},
-    ])
+    dialog.confirm({
+      title: 'Eliminar egreso',
+      message: '¿Seguro que quieres eliminar este egreso?',
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => { await api.delete(`/expenses/${id}`); fetchExpenses() },
+    })
   }
 
   const total = expenses.reduce((s, e) => s + parseFloat(e.amount), 0)
@@ -173,14 +179,14 @@ export default function Expenses() {
       </ScrollView>
 
       {/* Modal */}
-      <Modal visible={showModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
+      <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
           <View style={{
             backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '90%',
             shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 },
             shadowOpacity: 0.3, shadowRadius: 16, elevation: 12,
           }}>
-            <ScrollView style={{ gap: 16 }}>
+            <ScrollView style={{ gap: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text, letterSpacing: -0.3 }}>
                   {editing ? 'Editar Egreso' : 'Nuevo Egreso'}

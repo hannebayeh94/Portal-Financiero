@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import api from '../api/client'
@@ -7,6 +7,8 @@ import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -22,6 +24,7 @@ const emptyForm = () => ({
 })
 
 export default function Savings({ navigation }) {
+  const kb = useKeyboardHeight()
   const [savings, setSavings] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -53,7 +56,7 @@ export default function Savings({ navigation }) {
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.bank || formData.current_balance === '') {
-      Alert.alert('Error', 'Completa nombre, banco y saldo'); return
+      dialog.alert('Error', 'Completa nombre, banco y saldo'); return
     }
     const payload = {
       ...formData,
@@ -64,17 +67,20 @@ export default function Savings({ navigation }) {
     try {
       editing ? await api.put(`/savings/${editing.id}`, payload) : await api.post('/savings', payload)
       setShowModal(false); setEditing(null); setFormData(emptyForm()); fetchSavings()
-    } catch (e) { Alert.alert('Error', 'Error al guardar la cuenta') }
+    } catch (e) { dialog.alert('Error', 'Error al guardar la cuenta') }
   }
 
   const handleDelete = (id, name) => {
-    Alert.alert('Eliminar', `¿Eliminar "${name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    dialog.confirm({
+      title: 'Eliminar cuenta',
+      message: `¿Eliminar "${name}"?`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
         try { await api.delete(`/savings/${id}`); fetchSavings() }
-        catch (e) { Alert.alert('Error', 'Error al eliminar') }
-      }},
-    ])
+        catch (e) { dialog.alert('Error', 'Error al eliminar') }
+      },
+    })
   }
 
   const totalBalance = savings.reduce((s, a) => s + parseFloat(a.current_balance || 0), 0)
@@ -150,10 +156,10 @@ export default function Savings({ navigation }) {
         </View>
       </ScrollView>
 
-      <Modal visible={showModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
+      <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
           <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '90%', shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 12 }}>
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text, letterSpacing: -0.3 }}>{editing ? 'Editar Cuenta' : 'Nueva Cuenta'}</Text>
                 <TouchableOpacity onPress={() => setShowModal(false)}><Ionicons name="close" size={24} color={colors.dark[400]} /></TouchableOpacity>

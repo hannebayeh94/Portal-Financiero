@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
@@ -7,11 +7,14 @@ import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
 export default function Incomes() {
   const now = new Date()
+  const kb = useKeyboardHeight()
   const [incomes, setIncomes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -26,11 +29,11 @@ export default function Incomes() {
 
   const resetForm = () => setFormData({ amount: '', description: '', date: new Date().toISOString().split('T')[0], source: 'salary', recurring: false, recurrence_type: 'monthly' })
   const handleSubmit = async () => {
-    if (!formData.amount || !formData.description) { Alert.alert('Error', 'Completa los campos'); return }
+    if (!formData.amount || !formData.description) { dialog.alert('Error', 'Completa los campos'); return }
     try {
       editing ? await api.put(`/incomes/${editing.id}`, formData) : await api.post('/incomes', formData)
       setShowModal(false); setEditing(null); resetForm(); fetch()
-    } catch (e) { Alert.alert('Error', 'Error al guardar') }
+    } catch (e) { dialog.alert('Error', 'Error al guardar') }
   }
   const handleEdit = (inc) => {
     setEditing(inc)
@@ -38,10 +41,13 @@ export default function Incomes() {
     setShowModal(true)
   }
   const handleDelete = (id) => {
-    Alert.alert('Eliminar', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => { await api.delete(`/incomes/${id}`); fetch() } },
-    ])
+    dialog.confirm({
+      title: 'Eliminar ingreso',
+      message: '¿Seguro que quieres eliminar este ingreso?',
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => { await api.delete(`/incomes/${id}`); fetch() },
+    })
   }
 
   const total = incomes.reduce((s, i) => s + parseFloat(i.amount), 0)
@@ -85,10 +91,10 @@ export default function Incomes() {
         </View>
       </ScrollView>
 
-      <Modal visible={showModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
+      <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
           <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '85%', shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 12 }}>
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text }}>{editing ? 'Editar Ingreso' : 'Nuevo Ingreso'}</Text>
                 <TouchableOpacity onPress={() => setShowModal(false)}><Ionicons name="close" size={24} color={colors.dark[400]} /></TouchableOpacity>

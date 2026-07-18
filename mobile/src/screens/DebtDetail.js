@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import api from '../api/client'
@@ -7,6 +7,8 @@ import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDate } from '../utils/formatters'
 
@@ -40,7 +42,7 @@ export default function DebtDetail({ route, navigation }) {
       const r = await api.get(`/debts/${id}`)
       setDebt(r.data)
     } catch {
-      Alert.alert('Error', 'No se pudo cargar la deuda')
+      dialog.alert('Error', 'No se pudo cargar la deuda')
       navigation.goBack()
     } finally {
       setLoading(false)
@@ -50,7 +52,7 @@ export default function DebtDetail({ route, navigation }) {
   useEffect(() => { fetchDebt() }, [fetchDebt])
 
   const registerPayment = async () => {
-    if (!payForm.amount) { Alert.alert('Falta el monto', 'Ingresa el monto del pago'); return }
+    if (!payForm.amount) { dialog.alert('Falta el monto', 'Ingresa el monto del pago'); return }
     setSaving(true)
     try {
       await api.post(`/debts/${id}/payments`, payForm)
@@ -58,12 +60,12 @@ export default function DebtDetail({ route, navigation }) {
       setPayForm({ amount: '', payment_date: today() })
       await fetchDebt()
     } catch {
-      Alert.alert('Error', 'No se pudo registrar el pago')
+      dialog.alert('Error', 'No se pudo registrar el pago')
     } finally { setSaving(false) }
   }
 
   const registerCharge = async () => {
-    if (!chargeForm.amount) { Alert.alert('Falta el monto', 'Ingresa el monto del consumo'); return }
+    if (!chargeForm.amount) { dialog.alert('Falta el monto', 'Ingresa el monto del consumo'); return }
     setSaving(true)
     try {
       await api.post(`/debts/${id}/charges`, chargeForm)
@@ -71,7 +73,7 @@ export default function DebtDetail({ route, navigation }) {
       setChargeForm({ amount: '', payment_date: today(), description: '' })
       await fetchDebt()
     } catch {
-      Alert.alert('Error', 'No se pudo registrar el consumo')
+      dialog.alert('Error', 'No se pudo registrar el consumo')
     } finally { setSaving(false) }
   }
 
@@ -89,29 +91,35 @@ export default function DebtDetail({ route, navigation }) {
       setEditingMov(null)
       await fetchDebt()
     } catch {
-      Alert.alert('Error', 'No se pudo actualizar el movimiento')
+      dialog.alert('Error', 'No se pudo actualizar el movimiento')
     } finally { setSaving(false) }
   }
 
   const deleteMov = (mov) => {
     const label = mov.type === 'charge' ? 'consumo' : 'pago'
-    Alert.alert('Eliminar', `¿Eliminar este ${label}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    dialog.confirm({
+      title: 'Eliminar',
+      message: `¿Eliminar este ${label}?`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
         try { await api.delete(`/debts/${id}/payments/${mov.id}`); await fetchDebt() }
-        catch { Alert.alert('Error', 'No se pudo eliminar') }
-      } },
-    ])
+        catch { dialog.alert('Error', 'No se pudo eliminar') }
+      },
+    })
   }
 
   const deleteDebt = () => {
-    Alert.alert('Eliminar deuda', `¿Eliminar "${debt.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    dialog.confirm({
+      title: 'Eliminar deuda',
+      message: `¿Eliminar "${debt.name}"?`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
         try { await api.delete(`/debts/${id}`); navigation.goBack() }
-        catch { Alert.alert('Error', 'No se pudo eliminar la deuda') }
-      } },
-    ])
+        catch { dialog.alert('Error', 'No se pudo eliminar la deuda') }
+      },
+    })
   }
 
   if (loading || !debt) {
@@ -236,24 +244,25 @@ export default function DebtDetail({ route, navigation }) {
 }
 
 function MovModal({ visible, title, subtitle, onClose, insets, saving, onSave, saveLabel, accent, children }) {
+  const kb = useKeyboardHeight()
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 20, paddingHorizontal: 20, paddingBottom: insets.bottom + 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text }}>{title}</Text>
-                {subtitle ? <Text style={{ fontSize: 12, color: clay.textMuted, marginTop: 2 }}>{subtitle}</Text> : null}
-              </View>
-              <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={clay.textMuted} /></TouchableOpacity>
+      <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
+        <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 20, paddingHorizontal: 20, paddingBottom: (kb > 0 ? 16 : insets.bottom + 16), maxHeight: '92%' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text }}>{title}</Text>
+              {subtitle ? <Text style={{ fontSize: 12, color: clay.textMuted, marginTop: 2 }}>{subtitle}</Text> : null}
             </View>
+            <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={clay.textMuted} /></TouchableOpacity>
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {children}
             <View style={{ height: 16 }} />
             <ClayButton title={saveLabel} variant={accent || 'primary'} onPress={onSave} loading={saving} />
-          </View>
+          </ScrollView>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   )
 }

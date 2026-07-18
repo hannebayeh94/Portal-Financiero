@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import api from '../api/client'
@@ -7,6 +7,8 @@ import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -53,6 +55,7 @@ export default function Debts({ navigation }) {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const insets = useSafeAreaInsets()
+  const kb = useKeyboardHeight()
 
   const fetchDebts = () =>
     api.get('/debts').then(r => setDebts(r.data)).catch(() => {}).finally(() => setLoading(false))
@@ -90,7 +93,7 @@ export default function Debts({ navigation }) {
 
   const handleSave = async () => {
     if (!form.name || !form.bank_or_lender || !form.total_amount || !form.monthly_payment || !form.interest_rate || !form.term_months || !form.end_date) {
-      Alert.alert('Campos incompletos', 'Completa todos los campos obligatorios')
+      dialog.alert('Campos incompletos', 'Completa todos los campos obligatorios')
       return
     }
     setSaving(true)
@@ -103,17 +106,20 @@ export default function Debts({ navigation }) {
       setModalVisible(false)
       fetchDebts()
     } catch {
-      Alert.alert('Error', editing ? 'No se pudo actualizar la deuda' : 'No se pudo crear la deuda')
+      dialog.alert('Error', editing ? 'No se pudo actualizar la deuda' : 'No se pudo crear la deuda')
     } finally {
       setSaving(false)
     }
   }
 
   const deleteDebt = (id, name) => {
-    Alert.alert('Eliminar', `¿Eliminar "${name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => { await api.delete(`/debts/${id}`); setDebts(d => d.filter(x => x.id !== id)) } },
-    ])
+    dialog.confirm({
+      title: 'Eliminar deuda',
+      message: `¿Eliminar "${name}"?`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => { await api.delete(`/debts/${id}`); setDebts(d => d.filter(x => x.id !== id)) },
+    })
   }
 
   const total = debts.reduce((s, d) => s + parseFloat(d.current_balance || 0), 0)
@@ -177,14 +183,13 @@ export default function Debts({ navigation }) {
       </ScrollView>
 
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 20, paddingHorizontal: 20, paddingBottom: insets.bottom + 16, maxHeight: '92%' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text }}>{editing ? 'Editar deuda' : 'Nueva deuda'}</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close" size={24} color={clay.textMuted} /></TouchableOpacity>
-              </View>
-              <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
+          <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 20, paddingHorizontal: 20, paddingBottom: (kb > 0 ? 16 : insets.bottom + 16), maxHeight: '92%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text }}>{editing ? 'Editar deuda' : 'Nueva deuda'}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close" size={24} color={clay.textMuted} /></TouchableOpacity>
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <ClayInput label="Nombre" value={form.name} onChangeText={(v) => set('name', v)} placeholder="Ej: Tarjeta de crédito" />
                 <ClayInput label="Banco o prestamista" value={form.bank_or_lender} onChangeText={(v) => set('bank_or_lender', v)} placeholder="Ej: Bancolombia" />
                 <ClayInput label="Monto total" value={form.total_amount} onChangeText={(v) => set('total_amount', v)} keyboardType="numeric" placeholder="0" />
@@ -206,10 +211,9 @@ export default function Debts({ navigation }) {
                 <View style={{ height: 16 }} />
                 <ClayButton title={editing ? 'Actualizar' : 'Guardar'} onPress={handleSave} loading={saving} />
                 <View style={{ height: 8 }} />
-              </ScrollView>
-            </View>
+            </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </View>
   )

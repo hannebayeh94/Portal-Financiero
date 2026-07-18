@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
+import { dialog } from '../components/ConfirmDialog'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import GradientCard from '../components/GradientCard'
@@ -16,7 +17,7 @@ export default function Login({ navigation }) {
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Todos los campos son obligatorios')
+      dialog.alert('Error', 'Todos los campos son obligatorios')
       return
     }
     setLoading(true)
@@ -26,7 +27,7 @@ export default function Login({ navigation }) {
       const msg = error.response?.data?.error
         || (error.code === 'ECONNABORTED' ? 'El servidor está iniciando, intenta de nuevo' : null)
         || 'Error al iniciar sesión. Verifica tu conexión'
-      Alert.alert('Error', msg)
+      dialog.alert('Error', msg)
     } finally {
       setLoading(false)
     }

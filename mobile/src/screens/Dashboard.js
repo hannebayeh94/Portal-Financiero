@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
+import { dialog } from '../components/ConfirmDialog'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import GradientCard from '../components/GradientCard'
@@ -39,10 +40,13 @@ export default function Dashboard() {
   useEffect(() => { fetchData() }, [])
 
   const handleLogout = () => {
-    Alert.alert('Cerrar sesión', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Salir', style: 'destructive', onPress: logout },
-    ])
+    dialog.confirm({
+      title: 'Cerrar sesión',
+      message: '¿Seguro que quieres salir de tu cuenta?',
+      confirmLabel: 'Salir',
+      destructive: true,
+      onConfirm: logout,
+    })
   }
 
   const totalIncome = incomeSummary?.total || 0

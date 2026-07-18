@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNotifications } from '../context/NotificationContext'
+import { dialog } from './ConfirmDialog'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 import api from '../api/client'
@@ -43,7 +44,7 @@ export default function AutoExpenseModal() {
       }
       close(removeCurrent)
     } catch {
-      Alert.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
+      dialog.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
     } finally { setSaving(false) }
   }
 
@@ -53,14 +54,14 @@ export default function AutoExpenseModal() {
       const r = await api.get('/debts', { params: { status: 'active' } })
       const list = r.data || []
       if (list.length === 0) {
-        Alert.alert('Sin deudas', 'No tienes deudas activas para asociar este egreso.')
+        dialog.alert('Sin deudas', 'No tienes deudas activas para asociar este egreso.')
         return
       }
       setDebts(list)
       setSelectedDebt(list[0].id)
       setMode('associate')
     } catch {
-      Alert.alert('Error', 'No se pudieron cargar las deudas')
+      dialog.alert('Error', 'No se pudieron cargar las deudas')
     } finally { setSaving(false) }
   }
 
@@ -75,7 +76,7 @@ export default function AutoExpenseModal() {
       }
       close(removeCurrent)
     } catch {
-      Alert.alert('Error', 'No se pudo asociar el egreso a la deuda')
+      dialog.alert('Error', 'No se pudo asociar el egreso a la deuda')
     } finally { setSaving(false) }
   }
 

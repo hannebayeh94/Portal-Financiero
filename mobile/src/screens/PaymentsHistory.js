@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { clay, colors, shadow } from '../theme'
+import { dialog } from '../components/ConfirmDialog'
 import { useNotifications } from '../context/NotificationContext'
 import { formatCurrency } from '../utils/formatters'
 import api from '../api/client'
@@ -32,12 +33,12 @@ export default function PaymentsHistory({ navigation }) {
     try {
       const r = await api.get('/debts', { params: { status: 'active' } })
       const list = r.data || []
-      if (list.length === 0) { Alert.alert('Sin deudas', 'No tienes deudas activas para asociar este egreso.'); return }
+      if (list.length === 0) { dialog.alert('Sin deudas', 'No tienes deudas activas para asociar este egreso.'); return }
       setDebts(list)
       setAssocDebt(list[0].id)
       setAssocType('payment')
       setAssocFor(id)
-    } catch { Alert.alert('Error', 'No se pudieron cargar las deudas') }
+    } catch { dialog.alert('Error', 'No se pudieron cargar las deudas') }
   }
 
   const associate = async (p) => {
@@ -53,7 +54,7 @@ export default function PaymentsHistory({ navigation }) {
       }
       setAssocFor(null)
       await removeOne(id)
-    } catch { Alert.alert('Error', 'No se pudo asociar el egreso a la deuda') }
+    } catch { dialog.alert('Error', 'No se pudo asociar el egreso a la deuda') }
     finally { setSavingId(null) }
   }
 
@@ -77,17 +78,20 @@ export default function PaymentsHistory({ navigation }) {
       }
       await removeOne(id)
     } catch {
-      Alert.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
+      dialog.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
     } finally {
       setSavingId(null)
     }
   }
 
   const discard = (p) => {
-    Alert.alert('Descartar', '¿Eliminar este pago detectado?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => removeOne(p.id ?? p.detected_at) },
-    ])
+    dialog.confirm({
+      title: 'Descartar',
+      message: '¿Eliminar este pago detectado?',
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: () => removeOne(p.id ?? p.detected_at),
+    })
   }
 
   return (

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { NotificationProvider } from './src/context/NotificationContext'
+import DialogProvider from './src/components/ConfirmDialog'
 import { clay, colors } from './src/theme'
 
 import Login from './src/screens/Login'
@@ -126,7 +127,9 @@ export default function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar style="dark" />
-        <RootNavigator />
+        <DialogProvider>
+          <RootNavigator />
+        </DialogProvider>
       </AuthProvider>
     </SafeAreaProvider>
   )

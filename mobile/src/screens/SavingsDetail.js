@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import api from '../api/client'
@@ -8,6 +8,8 @@ import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { dialog } from '../components/ConfirmDialog'
+import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDate } from '../utils/formatters'
 
@@ -27,6 +29,7 @@ const emptyTx = () => ({ amount: '', type: 'deposit', date: new Date().toISOStri
 
 export default function SavingsDetail({ route, navigation }) {
   const { id } = route.params
+  const kb = useKeyboardHeight()
   const [account, setAccount] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showTxModal, setShowTxModal] = useState(false)
@@ -40,7 +43,7 @@ export default function SavingsDetail({ route, navigation }) {
       const res = await api.get(`/savings/${id}`)
       setAccount(res.data)
     } catch (e) {
-      Alert.alert('Error', 'Error al cargar la cuenta'); navigation.goBack()
+      dialog.alert('Error', 'Error al cargar la cuenta'); navigation.goBack()
     } finally { setLoading(false) }
   }
 
@@ -55,24 +58,27 @@ export default function SavingsDetail({ route, navigation }) {
   }
 
   const handleTxSubmit = async () => {
-    if (!txData.amount) { Alert.alert('Error', 'Ingresa el monto'); return }
+    if (!txData.amount) { dialog.alert('Error', 'Ingresa el monto'); return }
     const payload = { ...txData, amount: parseFloat(txData.amount) }
     try {
       editingTx
         ? await api.put(`/savings/${id}/transactions/${editingTx.id}`, payload)
         : await api.post(`/savings/${id}/transactions`, payload)
       setShowTxModal(false); setEditingTx(null); setTxData(emptyTx()); fetchAccount()
-    } catch (e) { Alert.alert('Error', 'Error al guardar el movimiento') }
+    } catch (e) { dialog.alert('Error', 'Error al guardar el movimiento') }
   }
 
   const handleTxDelete = (txId) => {
-    Alert.alert('Eliminar', '¿Eliminar este movimiento?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    dialog.confirm({
+      title: 'Eliminar movimiento',
+      message: '¿Eliminar este movimiento?',
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
         try { await api.delete(`/savings/${id}/transactions/${txId}`); fetchAccount() }
-        catch (e) { Alert.alert('Error', 'Error al eliminar') }
-      }},
-    ])
+        catch (e) { dialog.alert('Error', 'Error al eliminar') }
+      },
+    })
   }
 
   const openEditAccount = () => {
@@ -87,7 +93,7 @@ export default function SavingsDetail({ route, navigation }) {
 
   const handleAccountUpdate = async () => {
     if (!editData.name || !editData.bank || editData.current_balance === '') {
-      Alert.alert('Error', 'Completa nombre, banco y saldo'); return
+      dialog.alert('Error', 'Completa nombre, banco y saldo'); return
     }
     const payload = {
       name: editData.name, bank: editData.bank, type: editData.type, active: editData.active,
@@ -98,17 +104,20 @@ export default function SavingsDetail({ route, navigation }) {
     try {
       await api.put(`/savings/${id}`, payload)
       setShowEditModal(false); fetchAccount()
-    } catch (e) { Alert.alert('Error', 'Error al actualizar la cuenta') }
+    } catch (e) { dialog.alert('Error', 'Error al actualizar la cuenta') }
   }
 
   const handleAccountDelete = () => {
-    Alert.alert('Eliminar cuenta', `¿Eliminar "${account.name}"? Se borrarán también sus movimientos.`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    dialog.confirm({
+      title: 'Eliminar cuenta',
+      message: `¿Eliminar "${account.name}"? Se borrarán también sus movimientos.`,
+      confirmLabel: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
         try { await api.delete(`/savings/${id}`); navigation.goBack() }
-        catch (e) { Alert.alert('Error', 'Error al eliminar la cuenta') }
-      }},
-    ])
+        catch (e) { dialog.alert('Error', 'Error al eliminar la cuenta') }
+      },
+    })
   }
 
   if (loading || !account) {
@@ -222,10 +231,10 @@ export default function SavingsDetail({ route, navigation }) {
         </View>
       </ScrollView>
 
-      <Modal visible={showTxModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
+      <Modal visible={showTxModal} transparent animationType="slide" onRequestClose={() => setShowTxModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
           <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '90%', shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 12 }}>
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text, letterSpacing: -0.3 }}>{editingTx ? 'Editar Movimiento' : 'Nuevo Movimiento'}</Text>
                 <TouchableOpacity onPress={() => setShowTxModal(false)}><Ionicons name="close" size={24} color={colors.dark[400]} /></TouchableOpacity>
@@ -257,10 +266,10 @@ export default function SavingsDetail({ route, navigation }) {
         </View>
       </Modal>
 
-      <Modal visible={showEditModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'flex-end' }}>
+      <Modal visible={showEditModal} transparent animationType="slide" onRequestClose={() => setShowEditModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(20,23,38,0.55)', justifyContent: 'flex-end', paddingBottom: kb }}>
           <View style={{ backgroundColor: clay.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '90%', shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 12 }}>
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: clay.text, letterSpacing: -0.3 }}>Editar Cuenta</Text>
                 <TouchableOpacity onPress={() => setShowEditModal(false)}><Ionicons name="close" size={24} color={colors.dark[400]} /></TouchableOpacity>
