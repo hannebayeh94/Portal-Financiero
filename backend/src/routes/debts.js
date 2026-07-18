@@ -232,7 +232,8 @@ router.post('/:id/payments', async (req, res) => {
         capital_portion: capitalPortion,
         interest_portion: interestPortion,
         payment_date,
-        remaining_balance: Math.max(0, newBalance)
+        remaining_balance: Math.max(0, newBalance),
+        type: 'payment'
       })
       .returning('*');
 
@@ -272,6 +273,57 @@ router.post('/:id/payments', async (req, res) => {
   }
 });
 
+// Registrar un consumo/cargo (ej. nueva compra con tarjeta de crédito):
+// aumenta el saldo actual y el monto total de la deuda.
+router.post('/:id/charges', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, payment_date, description } = req.body;
+
+    const chargeAmount = parseFloat(amount);
+    if (!chargeAmount || chargeAmount <= 0) {
+      return res.status(400).json({ error: 'El monto del consumo debe ser mayor a cero' });
+    }
+
+    const debt = await db('debts')
+      .where({ id, user_id: req.user.id })
+      .first();
+
+    if (!debt) {
+      return res.status(404).json({ error: 'Deuda no encontrada' });
+    }
+
+    const newBalance = parseFloat(debt.current_balance) + chargeAmount;
+    const newTotal = parseFloat(debt.total_amount) + chargeAmount;
+
+    const [charge] = await db('debt_payments')
+      .insert({
+        debt_id: id,
+        amount: chargeAmount,
+        capital_portion: chargeAmount,
+        interest_portion: 0,
+        payment_date,
+        remaining_balance: newBalance,
+        type: 'charge',
+        description: description || null
+      })
+      .returning('*');
+
+    await db('debts')
+      .where({ id })
+      .update({
+        current_balance: newBalance,
+        total_amount: newTotal,
+        status: debt.status === 'paid' ? 'active' : debt.status,
+        updated_at: db.fn.now()
+      });
+
+    res.status(201).json(charge);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al registrar consumo' });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -306,6 +358,34 @@ router.put('/:id/payments/:paymentId', async (req, res) => {
 
     if (!oldPayment) {
       return res.status(404).json({ error: 'Pago no encontrado' });
+    }
+
+    // Consumo: ajustar saldo y total por la diferencia de monto
+    if (oldPayment.type === 'charge') {
+      const delta = parseFloat(amount) - parseFloat(oldPayment.amount);
+      const newBalance = parseFloat(debt.current_balance) + delta;
+      const newTotal = parseFloat(debt.total_amount) + delta;
+
+      const [charge] = await db('debt_payments')
+        .where({ id: paymentId })
+        .update({
+          amount,
+          capital_portion: amount,
+          payment_date,
+          remaining_balance: newBalance
+        })
+        .returning('*');
+
+      await db('debts')
+        .where({ id })
+        .update({
+          current_balance: newBalance,
+          total_amount: newTotal,
+          status: newBalance > 0 && debt.status === 'paid' ? 'active' : debt.status,
+          updated_at: db.fn.now()
+        });
+
+      return res.json(charge);
     }
 
     const monthlyRate = parseFloat(debt.interest_rate) / 100 / 12;
@@ -349,6 +429,22 @@ router.delete('/:id/payments/:paymentId', async (req, res) => {
     }
 
     await db('debt_payments').where({ id: paymentId }).del();
+
+    // Consumo: revertir el aumento de saldo y total
+    if (payment.type === 'charge') {
+      const newBalance = Math.max(0, parseFloat(debt.current_balance) - parseFloat(payment.amount));
+      const newTotal = Math.max(0, parseFloat(debt.total_amount) - parseFloat(payment.amount));
+      await db('debts')
+        .where({ id })
+        .update({
+          current_balance: newBalance,
+          total_amount: newTotal,
+          status: newBalance <= 0 ? 'paid' : debt.status,
+          updated_at: db.fn.now()
+        });
+
+      return res.json({ message: 'Consumo eliminado' });
+    }
 
     const newBalance = parseFloat(debt.current_balance) + parseFloat(payment.capital_portion);
     await db('debts')

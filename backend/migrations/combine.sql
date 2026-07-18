@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS debt_payments (
   interest_portion NUMERIC(12,2) NOT NULL,
   payment_date DATE NOT NULL,
   remaining_balance NUMERIC(12,2) NOT NULL,
+  type VARCHAR(50) NOT NULL DEFAULT 'payment' CHECK (type IN ('payment', 'charge')),
+  description VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

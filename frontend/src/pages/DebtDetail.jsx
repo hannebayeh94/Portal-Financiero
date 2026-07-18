@@ -27,12 +27,18 @@ export default function DebtDetail() {
   const [projection, setProjection] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showChargeModal, setShowChargeModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showEditPaymentModal, setShowEditPaymentModal] = useState(false)
   const [editingPayment, setEditingPayment] = useState(null)
   const [paymentData, setPaymentData] = useState({
     amount: '',
     payment_date: new Date().toISOString().split('T')[0],
+  })
+  const [chargeData, setChargeData] = useState({
+    amount: '',
+    payment_date: new Date().toISOString().split('T')[0],
+    description: '',
   })
   const [editPaymentData, setEditPaymentData] = useState({
     amount: '',
@@ -82,6 +88,19 @@ export default function DebtDetail() {
       fetchDebtData()
     } catch (error) {
       toast.error('Error al registrar pago')
+    }
+  }
+
+  const handleCharge = async (e) => {
+    e.preventDefault()
+    try {
+      await api.post(`/debts/${id}/charges`, chargeData)
+      toast.success('Consumo registrado')
+      setShowChargeModal(false)
+      setChargeData({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '' })
+      fetchDebtData()
+    } catch (error) {
+      toast.error('Error al registrar consumo')
     }
   }
 
@@ -258,6 +277,10 @@ export default function DebtDetail() {
             <TrashIcon className="h-5 w-5 mr-2" />
             Eliminar
           </button>
+          <button onClick={() => setShowChargeModal(true)} className="btn-secondary">
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Agregar Consumo
+          </button>
           <button onClick={() => setShowPaymentModal(true)} className="btn-success">
             <PlusIcon className="h-5 w-5 mr-2" />
             Registrar Pago
@@ -368,13 +391,14 @@ export default function DebtDetail() {
 
       {/* Payment History */}
       <div className="card p-6">
-        <h3 className="text-lg font-display font-bold text-dark-900 mb-4">Historial de Pagos</h3>
+        <h3 className="text-lg font-display font-bold text-dark-900 mb-4">Historial de Movimientos</h3>
         {debt.payments?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-dark-50">
                 <tr>
                   <th className="table-header">Fecha</th>
+                  <th className="table-header">Tipo</th>
                   <th className="table-header">Capital</th>
                   <th className="table-header">Interés</th>
                   <th className="table-header">Saldo</th>
@@ -383,13 +407,20 @@ export default function DebtDetail() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-100">
-                {debt.payments.map((payment) => (
+                {debt.payments.map((payment) => {
+                  const isCharge = payment.type === 'charge'
+                  return (
                   <tr key={payment.id} className="hover:bg-dark-50 transition-colors">
                     <td className="table-cell">{formatDate(payment.payment_date)}</td>
-                    <td className="table-cell text-success-600 font-medium">{formatCurrency(payment.capital_portion)}</td>
-                    <td className="table-cell text-danger-600 font-medium">{formatCurrency(payment.interest_portion)}</td>
+                    <td className="table-cell">
+                      <span className={`badge ${isCharge ? 'badge-danger' : 'badge-success'}`}>
+                        {isCharge ? 'Consumo' : 'Abono'}
+                      </span>
+                    </td>
+                    <td className="table-cell text-success-600 font-medium">{isCharge ? '—' : formatCurrency(payment.capital_portion)}</td>
+                    <td className="table-cell text-danger-600 font-medium">{isCharge ? '—' : formatCurrency(payment.interest_portion)}</td>
                     <td className="table-cell font-semibold">{formatCurrency(payment.remaining_balance)}</td>
-                    <td className="table-cell text-right font-bold">{formatCurrency(payment.amount)}</td>
+                    <td className={`table-cell text-right font-bold ${isCharge ? 'text-danger-600' : 'text-dark-900'}`}>{isCharge ? '+' : '−'}{formatCurrency(payment.amount)}</td>
                     <td className="table-cell text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -407,7 +438,8 @@ export default function DebtDetail() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -456,6 +488,62 @@ export default function DebtDetail() {
                 </button>
                 <button type="submit" className="btn-success">
                   Registrar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Charge Modal */}
+      {showChargeModal && (
+        <div className="modal-overlay" onClick={() => setShowChargeModal(false)}>
+          <div className="modal-content animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-dark-100">
+              <h3 className="text-xl font-display font-bold text-dark-900">Agregar Consumo</h3>
+              <p className="text-sm text-dark-500 mt-1">Aumenta el saldo de la deuda por una nueva compra o cargo</p>
+            </div>
+            <form onSubmit={handleCharge} className="p-6 space-y-5">
+              <div>
+                <label className="input-label">Monto del consumo</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 font-medium">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={chargeData.amount}
+                    onChange={(e) => setChargeData({ ...chargeData, amount: e.target.value })}
+                    className="input-field pl-8 text-lg font-semibold"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="input-label">Descripción (opcional)</label>
+                <input
+                  type="text"
+                  value={chargeData.description}
+                  onChange={(e) => setChargeData({ ...chargeData, description: e.target.value })}
+                  placeholder="Ej: Compra supermercado"
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="input-label">Fecha</label>
+                <input
+                  type="date"
+                  required
+                  value={chargeData.payment_date}
+                  onChange={(e) => setChargeData({ ...chargeData, payment_date: e.target.value })}
+                  className="input-field"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={() => setShowChargeModal(false)} className="btn-secondary">
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary">
+                  Agregar
                 </button>
               </div>
             </form>
