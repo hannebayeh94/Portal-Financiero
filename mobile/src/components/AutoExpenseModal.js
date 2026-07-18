@@ -20,22 +20,35 @@ export default function AutoExpenseModal() {
 
   const amount = parseFloat(currentPayment.amount) || 0
   const today = new Date().toISOString().split('T')[0]
+  const isIncome = currentPayment.kind === 'income'
+  const accent = isIncome ? colors.success[400] : colors.danger[400]
 
   const handleRegister = async () => {
     setSaving(true)
     try {
-      await api.post('/expenses', {
-        amount,
-        description: currentPayment.merchant,
-        date: today,
-        type: 'variable',
-        recurring: false,
-        recurrence_type: 'monthly',
-        apply_four_per_thousand: false,
-      })
+      if (isIncome) {
+        await api.post('/incomes', {
+          amount,
+          description: currentPayment.merchant,
+          date: today,
+          source: 'other',
+          recurring: false,
+          recurrence_type: 'monthly',
+        })
+      } else {
+        await api.post('/expenses', {
+          amount,
+          description: currentPayment.merchant,
+          date: today,
+          type: 'variable',
+          recurring: false,
+          recurrence_type: 'monthly',
+          apply_four_per_thousand: false,
+        })
+      }
       dismissPayment()
     } catch {
-      Alert.alert('Error', 'No se pudo registrar el egreso')
+      Alert.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
     } finally {
       setSaving(false)
     }
@@ -52,17 +65,17 @@ export default function AutoExpenseModal() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <View style={{
           width: 40, height: 40, borderRadius: 14,
-          backgroundColor: colors.danger[400] + '20',
+          backgroundColor: accent + '20',
           justifyContent: 'center', alignItems: 'center',
         }}>
-          <Ionicons name="receipt-outline" size={20} color={colors.danger[400]} />
+          <Ionicons name={isIncome ? 'arrow-down-circle-outline' : 'receipt-outline'} size={20} color={accent} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: clay.textMuted }}>Pago detectado</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: clay.textMuted }}>{isIncome ? 'Ingreso detectado' : 'Pago detectado'}</Text>
           <Text style={{ fontSize: 16, fontWeight: '800', color: clay.text, marginTop: 1 }}>{currentPayment.merchant}</Text>
         </View>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.danger[400] }}>
-          {formatCurrency(amount)}
+        <Text style={{ fontSize: 18, fontWeight: '800', color: accent }}>
+          {isIncome ? '+' : ''}{formatCurrency(amount)}
         </Text>
       </View>
 
@@ -83,13 +96,13 @@ export default function AutoExpenseModal() {
         }}>
           <Text style={{ fontWeight: '700', fontSize: 13, color: clay.textMuted }}>Descartar</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleRegister} style={{
+        <TouchableOpacity onPress={handleRegister} disabled={saving} style={{
           flex: 1.5, borderRadius: 14, paddingVertical: 12, alignItems: 'center',
-          backgroundColor: colors.danger[400],
+          backgroundColor: accent, opacity: saving ? 0.6 : 1,
           shadowColor: clay.shadow, shadowOffset: { width: 4, height: 4 },
           shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
         }}>
-          <Text style={{ fontWeight: '800', fontSize: 13, color: '#fff' }}>Registrar</Text>
+          <Text style={{ fontWeight: '800', fontSize: 13, color: '#fff' }}>{saving ? 'Guardando…' : 'Registrar'}</Text>
         </TouchableOpacity>
       </View>
     </View>
