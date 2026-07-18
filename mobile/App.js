@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { NotificationProvider } from './src/context/NotificationContext'
 import { clay, colors } from './src/theme'
@@ -119,9 +119,11 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </AuthProvider>
+    </SafeAreaProvider>
   )
 }
