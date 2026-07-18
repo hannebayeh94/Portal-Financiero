@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { useState } from 'react'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import GradientCard from '../components/GradientCard'
+import AutoCaptureGuideModal from '../components/AutoCaptureGuideModal'
 import { clay, colors, gradients, shadow } from '../theme'
-import { openNotificationSettings } from '../../modules/notification-listener'
 
 const items = [
   { name: 'Debts', label: 'Deudas', icon: 'card', grad: gradients.debt, desc: 'Controla tus deudas activas' },
@@ -29,13 +30,7 @@ function Row({ icon, grad, label, desc, onPress }) {
 }
 
 export default function MoreScreen({ navigation }) {
-  const handleAutoCapture = () => {
-    try {
-      openNotificationSettings()
-    } catch {
-      Alert.alert('Configuración', 'Ve a Ajustes > Acceso a notificaciones y activa Portal Financiero')
-    }
-  }
+  const [guideVisible, setGuideVisible] = useState(false)
 
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
@@ -49,8 +44,10 @@ export default function MoreScreen({ navigation }) {
         ))}
         <View style={{ height: 6 }} />
         <Row icon="notifications" grad={gradients.brand} label="Captura automática"
-          desc="Detecta pagos de notificaciones automáticamente" onPress={handleAutoCapture} />
+          desc="Detecta pagos de notificaciones automáticamente" onPress={() => setGuideVisible(true)} />
       </ScrollView>
+
+      <AutoCaptureGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} />
     </View>
   )
 }

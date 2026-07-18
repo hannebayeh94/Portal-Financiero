@@ -21,6 +21,16 @@ export function isListening() {
   }
 }
 
+// Chequeo real del permiso de acceso a notificaciones (mas fiable que isListening).
+export function isNotificationAccessEnabled() {
+  if (!NativeMod) return false
+  try {
+    return NativeMod.isNotificationAccessEnabled()
+  } catch {
+    return false
+  }
+}
+
 export async function getDetectedPayments() {
   if (!NativeMod) return []
   try {
@@ -40,6 +50,14 @@ export function clearDetectedPayments() {
 export function openNotificationSettings() {
   if (!NativeMod) return
   NativeMod.openNotificationSettings()
+}
+
+// Abre la ficha de la app (donde esta "Permitir ajustes restringidos").
+export function openAppDetailsSettings() {
+  if (!NativeMod) return
+  try {
+    NativeMod.openAppDetailsSettings()
+  } catch {}
 }
 
 export function addPaymentListener(callback) {
