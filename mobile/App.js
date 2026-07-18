@@ -16,6 +16,7 @@ import Expenses from './src/screens/Expenses'
 import Incomes from './src/screens/Incomes'
 import MoreScreen from './src/screens/MoreScreen'
 import Debts from './src/screens/Debts'
+import DebtDetail from './src/screens/DebtDetail'
 import Savings from './src/screens/Savings'
 import SavingsDetail from './src/screens/SavingsDetail'
 import Reports from './src/screens/Reports'
@@ -40,6 +41,7 @@ function MoreStackScreen() {
     <MoreStack.Navigator>
       <MoreStack.Screen name="MoreMain" component={MoreScreen} options={{ headerShown: false }} />
       <MoreStack.Screen name="Debts" component={Debts} options={{ headerShown: false }} />
+      <MoreStack.Screen name="DebtDetail" component={DebtDetail} options={{ headerShown: false }} />
       <MoreStack.Screen name="Savings" component={Savings} options={{ headerShown: false }} />
       <MoreStack.Screen name="SavingsDetail" component={SavingsDetail} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reports" component={Reports} options={{ headerShown: false }} />

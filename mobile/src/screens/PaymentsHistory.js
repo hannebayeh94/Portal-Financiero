@@ -22,6 +22,40 @@ function timeAgo(ts) {
 export default function PaymentsHistory({ navigation }) {
   const { pendingPayments, removeOne } = useNotifications()
   const [savingId, setSavingId] = useState(null)
+  const [assocFor, setAssocFor] = useState(null)     // id del egreso en modo asociar
+  const [debts, setDebts] = useState([])
+  const [assocDebt, setAssocDebt] = useState(null)
+  const [assocType, setAssocType] = useState('payment')
+
+  const openAssociate = async (p) => {
+    const id = p.id ?? p.detected_at
+    try {
+      const r = await api.get('/debts', { params: { status: 'active' } })
+      const list = r.data || []
+      if (list.length === 0) { Alert.alert('Sin deudas', 'No tienes deudas activas para asociar este egreso.'); return }
+      setDebts(list)
+      setAssocDebt(list[0].id)
+      setAssocType('payment')
+      setAssocFor(id)
+    } catch { Alert.alert('Error', 'No se pudieron cargar las deudas') }
+  }
+
+  const associate = async (p) => {
+    const id = p.id ?? p.detected_at
+    const amount = parseFloat(p.amount) || 0
+    const date = new Date().toISOString().split('T')[0]
+    setSavingId(id)
+    try {
+      if (assocType === 'payment') {
+        await api.post(`/debts/${assocDebt}/payments`, { amount, payment_date: date })
+      } else {
+        await api.post(`/debts/${assocDebt}/charges`, { amount, payment_date: date, description: p.merchant })
+      }
+      setAssocFor(null)
+      await removeOne(id)
+    } catch { Alert.alert('Error', 'No se pudo asociar el egreso a la deuda') }
+    finally { setSavingId(null) }
+  }
 
   const register = async (p) => {
     const id = p.id ?? p.detected_at
@@ -126,6 +160,56 @@ export default function PaymentsHistory({ navigation }) {
                       : <Text style={{ fontWeight: '800', fontSize: 13, color: '#fff' }}>Registrar</Text>}
                   </TouchableOpacity>
                 </View>
+
+                {!isIncome && assocFor !== id && (
+                  <TouchableOpacity onPress={() => openAssociate(p)} style={{
+                    marginTop: 8, borderRadius: 12, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6,
+                    backgroundColor: colors.primary[50], borderWidth: 1, borderColor: colors.primary[100],
+                  }}>
+                    <Ionicons name="card-outline" size={15} color={colors.primary[600]} />
+                    <Text style={{ fontWeight: '800', fontSize: 12.5, color: colors.primary[600] }}>Asociar a una deuda</Text>
+                  </TouchableOpacity>
+                )}
+
+                {!isIncome && assocFor === id && (
+                  <View style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: clay.inset, borderWidth: 1, borderColor: clay.border }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, marginBottom: 8 }}>Elige la deuda</Text>
+                    {debts.map((d) => {
+                      const active = assocDebt === d.id
+                      return (
+                        <TouchableOpacity key={d.id} onPress={() => setAssocDebt(d.id)} activeOpacity={0.8}
+                          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 9, paddingHorizontal: 12, borderRadius: 11, marginBottom: 6,
+                            backgroundColor: active ? colors.primary[50] : clay.card, borderWidth: 1, borderColor: active ? colors.primary[400] : clay.border }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: clay.text }}>{d.name}</Text>
+                            <Text style={{ fontSize: 11, color: clay.textMuted }}>Saldo {formatCurrency(d.current_balance)}</Text>
+                          </View>
+                          {active && <Ionicons name="checkmark-circle" size={18} color={colors.primary[500]} />}
+                        </TouchableOpacity>
+                      )
+                    })}
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 10 }}>
+                      {[{ v: 'payment', l: 'Abono' }, { v: 'charge', l: 'Consumo' }].map((o) => {
+                        const active = assocType === o.v
+                        return (
+                          <TouchableOpacity key={o.v} onPress={() => setAssocType(o.v)} activeOpacity={0.8}
+                            style={{ flex: 1, paddingVertical: 9, borderRadius: 11, alignItems: 'center',
+                              backgroundColor: active ? colors.primary[500] : clay.card, borderWidth: 1, borderColor: active ? colors.primary[500] : clay.border }}>
+                            <Text style={{ fontSize: 12.5, fontWeight: '700', color: active ? '#fff' : clay.textMuted }}>{o.l}</Text>
+                          </TouchableOpacity>
+                        )
+                      })}
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity onPress={() => setAssocFor(null)} style={{ flex: 1, borderRadius: 11, paddingVertical: 10, alignItems: 'center', backgroundColor: clay.card, borderWidth: 1, borderColor: clay.border }}>
+                        <Text style={{ fontWeight: '700', fontSize: 13, color: clay.textMuted }}>Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => associate(p)} disabled={savingId === id} style={{ flex: 1.4, borderRadius: 11, paddingVertical: 10, alignItems: 'center', backgroundColor: colors.primary[500], opacity: savingId === id ? 0.6 : 1 }}>
+                        {savingId === id ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontWeight: '800', fontSize: 13, color: '#fff' }}>Asociar</Text>}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
               </View>
             )
           })
