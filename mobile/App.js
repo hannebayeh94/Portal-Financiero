@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
+import { NotificationProvider } from './src/context/NotificationContext'
 import { clay, colors } from './src/theme'
 
 import Login from './src/screens/Login'
@@ -15,9 +16,11 @@ import Incomes from './src/screens/Incomes'
 import MoreScreen from './src/screens/MoreScreen'
 import Debts from './src/screens/Debts'
 import Savings from './src/screens/Savings'
+import SavingsDetail from './src/screens/SavingsDetail'
 import Reports from './src/screens/Reports'
 import Calculator from './src/screens/Calculator'
 import Projections from './src/screens/Projections'
+import AutoExpenseModal from './src/components/AutoExpenseModal'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -36,6 +39,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="MoreMain" component={MoreScreen} options={{ headerShown: false }} />
       <MoreStack.Screen name="Debts" component={Debts} options={{ headerShown: false }} />
       <MoreStack.Screen name="Savings" component={Savings} options={{ headerShown: false }} />
+      <MoreStack.Screen name="SavingsDetail" component={SavingsDetail} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reports" component={Reports} options={{ headerShown: false }} />
       <MoreStack.Screen name="Calculator" component={Calculator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
@@ -45,6 +49,7 @@ function MoreStackScreen() {
 
 function MainTabs() {
   return (
+    <NotificationProvider>
     <Tab.Navigator
       screenOptions={({ route }) => {
         const tab = tabConfig.find(t => t.name === route.name)
@@ -53,18 +58,18 @@ function MainTabs() {
             <Ionicons
               name={focused ? tab?.activeIcon : tab?.icon}
               size={size}
-              color={focused ? colors.danger[400] : colors.dark[400]}
+              color={focused ? colors.primary[500] : colors.dark[400]}
             />
           ),
           tabBarLabel: tab?.label || route.name,
-          tabBarActiveTintColor: colors.danger[400],
+          tabBarActiveTintColor: colors.primary[500],
           tabBarInactiveTintColor: colors.dark[400],
           tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
           tabBarStyle: {
-            backgroundColor: clay.card, borderTopWidth: 1, borderTopColor: clay.highlight,
+            backgroundColor: clay.card, borderTopWidth: 1, borderTopColor: clay.border,
             paddingTop: 4, paddingBottom: 6, height: 58,
             shadowColor: clay.shadow, shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
+            shadowOpacity: 0.08, shadowRadius: 12, elevation: 8,
           },
           headerShown: false,
         }
@@ -75,6 +80,8 @@ function MainTabs() {
       <Tab.Screen name="Incomes" component={Incomes} />
       <Tab.Screen name="Más" component={MoreStackScreen} />
     </Tab.Navigator>
+      <AutoExpenseModal />
+    </NotificationProvider>
   )
 }
 
@@ -93,7 +100,7 @@ function RootNavigator() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: clay.bg }}>
-        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: clay.card, justifyContent: 'center', alignItems: 'center', shadowColor: clay.shadow, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6, marginBottom: 16 }}>
+        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: clay.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: clay.border, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 6, marginBottom: 16 }}>
           <Text style={{ fontSize: 28 }}>💰</Text>
         </View>
         <ActivityIndicator size="large" color={colors.primary[500]} />
