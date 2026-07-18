@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, Modal, TouchableOpacity, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNotifications } from '../context/NotificationContext'
 import ClayCard from './ClayCard'
 import ClayButton from './ClayButton'
@@ -13,6 +14,7 @@ import api from '../api/client'
 export default function AutoExpenseModal() {
   const { currentPayment, showPrompt, dismissPayment, skipPayment } = useNotifications()
   const [saving, setSaving] = useState(false)
+  const insets = useSafeAreaInsets()
 
   if (!showPrompt || !currentPayment) return null
 
@@ -41,7 +43,7 @@ export default function AutoExpenseModal() {
 
   return (
     <View style={{
-      position: 'absolute', bottom: 100, left: 16, right: 16,
+      position: 'absolute', bottom: 74 + insets.bottom, left: 16, right: 16,
       backgroundColor: clay.card, borderRadius: 24, padding: 20,
       shadowColor: clay.shadow, shadowOffset: { width: 0, height: -8 },
       shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,

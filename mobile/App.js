@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { NotificationProvider } from './src/context/NotificationContext'
 import { clay, colors } from './src/theme'
@@ -48,6 +49,7 @@ function MoreStackScreen() {
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets()
   return (
     <NotificationProvider>
     <Tab.Navigator
@@ -67,7 +69,7 @@ function MainTabs() {
           tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
           tabBarStyle: {
             backgroundColor: clay.card, borderTopWidth: 1, borderTopColor: clay.border,
-            paddingTop: 4, paddingBottom: 6, height: 58,
+            paddingTop: 4, paddingBottom: 6 + insets.bottom, height: 58 + insets.bottom,
             shadowColor: clay.shadow, shadowOffset: { width: 0, height: -4 },
             shadowOpacity: 0.08, shadowRadius: 12, elevation: 8,
           },
