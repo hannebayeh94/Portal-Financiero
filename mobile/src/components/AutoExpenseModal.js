@@ -12,7 +12,7 @@ import { formatCurrency } from '../utils/formatters'
 import api from '../api/client'
 
 export default function AutoExpenseModal() {
-  const { currentPayment, showPrompt, dismissPayment, skipPayment } = useNotifications()
+  const { currentPayment, showPrompt, skipCurrent, removeCurrent } = useNotifications()
   const [saving, setSaving] = useState(false)
   const insets = useSafeAreaInsets()
 
@@ -46,7 +46,7 @@ export default function AutoExpenseModal() {
           apply_four_per_thousand: false,
         })
       }
-      dismissPayment()
+      removeCurrent()
     } catch {
       Alert.alert('Error', isIncome ? 'No se pudo registrar el ingreso' : 'No se pudo registrar el egreso')
     } finally {
@@ -80,7 +80,7 @@ export default function AutoExpenseModal() {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-        <TouchableOpacity onPress={skipPayment} style={{
+        <TouchableOpacity onPress={skipCurrent} style={{
           flex: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center',
           backgroundColor: clay.inset,
           shadowColor: clay.shadow, shadowOffset: { width: 0, height: 2 },
@@ -88,7 +88,7 @@ export default function AutoExpenseModal() {
         }}>
           <Text style={{ fontWeight: '700', fontSize: 13, color: clay.textMuted }}>Ignorar</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={dismissPayment} style={{
+        <TouchableOpacity onPress={removeCurrent} style={{
           flex: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center',
           backgroundColor: clay.inset,
           shadowColor: clay.shadow, shadowOffset: { width: 0, height: 2 },

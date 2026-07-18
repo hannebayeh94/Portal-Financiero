@@ -54,6 +54,10 @@ class NotificationListenerModule : Module() {
       service.instance?.clearPayments()
     }
 
+    Function("removePayment") { id: String ->
+      service.instance?.removePayment(id)
+    }
+
     // Abre la pantalla de acceso a notificaciones. En API 30+ hace deep-link
     // directo al detalle de nuestra app; con fallback a la lista general.
     Function("openNotificationSettings") {

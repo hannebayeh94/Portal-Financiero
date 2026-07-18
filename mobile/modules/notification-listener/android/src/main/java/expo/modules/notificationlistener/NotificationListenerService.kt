@@ -66,6 +66,20 @@ class NotificationListenerService : android.service.notification.NotificationLis
   private fun clean(s: String): String =
     s.trim().trim('.', ',', '-', ':').replace(Regex("\\s+"), " ").take(50).trim()
 
+  // Corta colas comunes de las notificaciones para dejar solo el comercio/persona
+  private fun cleanDesc(s: String): String {
+    var d = s.trim()
+    val cut = listOf(
+      " fue ", " ha sido", " vía ", " via ", " con tu tarjeta", " con tu",
+      " a las ", " desde ", " en tu ", " en su cuenta", " a la cuenta"
+    )
+    for (t in cut) {
+      val idx = d.lowercase().indexOf(t)
+      if (idx > 0) d = d.substring(0, idx)
+    }
+    return clean(d)
+  }
+
   private fun amountFrom(regex: Regex, text: String): Double? {
     val m = regex.find(text) ?: return null
     return parseAmount(m.groupValues[1])
@@ -80,7 +94,7 @@ class NotificationListenerService : android.service.notification.NotificationLis
   private fun payment(amount: Double, description: String, kind: String, raw: String): Map<String, String> =
     mapOf(
       "amount" to amount.toString(),
-      "merchant" to clean(description).ifEmpty { if (kind == "income") "Ingreso recibido" else "Pago" },
+      "merchant" to cleanDesc(description).ifEmpty { if (kind == "income") "Ingreso recibido" else "Pago" },
       "kind" to kind,
       "source" to "notification",
       "raw" to raw.take(200)
@@ -98,27 +112,19 @@ class NotificationListenerService : android.service.notification.NotificationLis
     if (promoMarkers.any { lower.contains(it) }) return null
 
     // ---- INGRESOS ----
-    // Nu: "Recibiste 34.000,00 en tu cuenta ... Te llego dinero de NOMBRE"
-    amountFrom(Regex("""recibiste\s*(?:un pago de\s*)?\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE), text)?.let {
-      val who = groupFrom(Regex("""dinero de\s+(.+?)(?:\s+con tu llave|\.|,|$)""", RegexOption.IGNORE_CASE), text)
-        ?: groupFrom(Regex("""recibiste[^$]*?de\s+(.+?)(?:\s+con tu llave|\.|,|$)""", RegexOption.IGNORE_CASE), text)
-      return payment(it, who ?: "Ingreso recibido", "income", text)
-    }
-    // Otros bancos: "Te consignaron $X", "Abono por $X"
-    amountFrom(Regex("""(?:te\s+consignaron|abono(?:\s+por)?|consignaci[oó]n(?:\s+por)?)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE), text)?.let {
-      return payment(it, "Ingreso recibido", "income", text)
+    // Nu/Bancolombia/Daviplata: "Recibiste 34.000,00 ...", "Te consignaron $X",
+    // "Te transfirieron $X", "Recibiste una transferencia por $X", "Abono por $X"
+    val incomeAmount = amountFrom(
+      Regex("""(?:recibiste(?:\s+una\s+transferencia)?(?:\s+un\s+pago)?|te\s+(?:consignaron|transfirieron|enviaron|abonaron)|abono(?:\s+por)?|consignaci[oó]n(?:\s+por)?)\s*(?:de|por)?\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+      text
+    )
+    if (incomeAmount != null) {
+      val who = groupFrom(Regex("""dinero de\s+(.+?)(?:\s+con tu llave|[.,]|$)""", RegexOption.IGNORE_CASE), text)
+        ?: groupFrom(Regex("""\bde\s+([A-ZÁÉÍÓÚÑ*][^.,\n]{1,40}?)(?:\s+con tu llave|[.,]|$)""", RegexOption.IGNORE_CASE), text)
+      return payment(incomeAmount, who ?: "Ingreso recibido", "income", text)
     }
 
-    // ---- EGRESOS ----
-    // Nu: "Enviaste $25.000,00 ... Le enviaste a NOMBRE en su cuenta de BANCO"
-    amountFrom(Regex("""enviaste\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE), text)?.let {
-      val who = groupFrom(Regex("""le enviaste a\s+(.+?)\s+en su cuenta""", RegexOption.IGNORE_CASE), text)
-      return payment(it, who?.let { n -> "Envio a $n" } ?: "Transferencia enviada", "expense", text)
-    }
-    // Nu: "El pago de $33.899,00 a Movistar fue exitoso"
-    Regex("""pago de\s*\$?\s*([\d.,]+)\s*a\s+(.+?)\s+fue exitoso""", RegexOption.IGNORE_CASE).find(text)?.let { m ->
-      parseAmount(m.groupValues[1])?.let { return payment(it, m.groupValues[2], "expense", text) }
-    }
+    // ---- EGRESOS especificos ----
     // Rappi: "Tu compra en Tiendas D1 por $ 6.200 fue exitosa"
     Regex("""compra en\s+(.+?)\s+por\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE).find(text)?.let { m ->
       parseAmount(m.groupValues[2])?.let { return payment(it, m.groupValues[1], "expense", text) }
@@ -127,18 +133,35 @@ class NotificationListenerService : android.service.notification.NotificationLis
     Regex("""pago de tu\s+(\w+).*?por\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE).find(text)?.let { m ->
       parseAmount(m.groupValues[2])?.let { return payment(it, "Pago ${m.groupValues[1]}", "expense", text) }
     }
+    // Nu: "El pago de $33.899,00 a Movistar fue exitoso"
+    Regex("""pago de\s*\$?\s*([\d.,]+)\s*a\s+(.+?)\s+fue exitoso""", RegexOption.IGNORE_CASE).find(text)?.let { m ->
+      parseAmount(m.groupValues[1])?.let { return payment(it, m.groupValues[2], "expense", text) }
+    }
+    // Nu/Daviplata/Nequi: "Enviaste $25.000,00 ... (Le) enviaste a NOMBRE ..."
+    amountFrom(Regex("""enviaste\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE), text)?.let {
+      val who = groupFrom(Regex("""le enviaste a\s+(.+?)\s+en su cuenta""", RegexOption.IGNORE_CASE), text)
+        ?: groupFrom(Regex("""enviaste\s*\$?\s*[\d.,]+\s*a\s+(.+?)(?:\s+en su cuenta|[.,]|$)""", RegexOption.IGNORE_CASE), text)
+      return payment(it, who?.let { n -> "Envio a $n" } ?: "Transferencia enviada", "expense", text)
+    }
+    // Bancolombia: "Transferiste $100.000 a NOMBRE"
+    amountFrom(Regex("""transferiste\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE), text)?.let {
+      val who = groupFrom(Regex("""transferiste\s*\$?\s*[\d.,]+\s*a\s+(.+?)(?:\s+en su cuenta|[.,]|$)""", RegexOption.IGNORE_CASE), text)
+      return payment(it, who?.let { n -> "Envio a $n" } ?: "Transferencia enviada", "expense", text)
+    }
 
-    // ---- EGRESOS genericos (varios bancos) ----
+    // ---- EGRESOS genericos (Bancolombia, Daviplata, Nequi, etc.) ----
     val expenseRules = listOf(
       Regex("""pagaste\s*\$?\s*([\d.,]+)\s*(?:en|a|por)\s+(.+)""", RegexOption.IGNORE_CASE),
+      Regex("""realizaste una compra\s*(?:de|por)?\s*\$?\s*([\d.,]+)\s*(?:en|a)\s+(.+)""", RegexOption.IGNORE_CASE),
       Regex("""compra(?:ste)?\s*(?:de|por)?\s*\$?\s*([\d.,]+)\s*(?:en|a)\s+(.+)""", RegexOption.IGNORE_CASE),
-      Regex("""(?:consumo|cargo|retiro|compra)\s+(?:de|por)\s*\$?\s*([\d.,]+)\s*(?:en|por|a)\s+(.+)""", RegexOption.IGNORE_CASE),
-      Regex("""pago(?:\s+por)?\s*\$?\s*([\d.,]+)\s*(?:en|a)\s+(.+)""", RegexOption.IGNORE_CASE),
+      Regex("""(?:consumo|cargo|retiro|avance)\s+(?:de|por)\s*\$?\s*([\d.,]+)\s*(?:en|por|a)\s+(.+)""", RegexOption.IGNORE_CASE),
+      Regex("""(?:retiraste|sacaste)\s*\$?\s*([\d.,]+)\s*(?:en|de|por)\s+(.+)""", RegexOption.IGNORE_CASE),
+      Regex("""pago\s+(?:de|por)?\s*\$?\s*([\d.,]+)\s*(?:en|a)\s+(.+)""", RegexOption.IGNORE_CASE),
     )
     for (r in expenseRules) {
       val m = r.find(text) ?: continue
       val amount = parseAmount(m.groupValues[1]) ?: continue
-      return payment(amount, m.groupValues[2], "expense", text)
+      return payment(amount, m.groupValues.getOrNull(2) ?: "Pago", "expense", text)
     }
     return null
   }
@@ -147,10 +170,34 @@ class NotificationListenerService : android.service.notification.NotificationLis
     val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val existing = prefs.getString(PREFS_KEY, "[]") ?: "[]"
     val arr = org.json.JSONArray(existing)
+
+    // Dedup: si el mismo texto crudo ya fue guardado, no repetir
+    // (los bancos re-emiten la misma notificacion varias veces)
+    val raw = payment["raw"] ?: ""
+    for (i in 0 until arr.length()) {
+      if (arr.getJSONObject(i).optString("raw") == raw) return
+    }
+
     val obj = org.json.JSONObject(payment)
-    obj.put("detected_at", System.currentTimeMillis())
+    val id = System.currentTimeMillis()
+    obj.put("detected_at", id)
+    obj.put("id", id.toString())
     arr.put(obj)
     prefs.edit().putString(PREFS_KEY, arr.toString()).apply()
+  }
+
+  fun removePayment(id: String) {
+    val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val raw = prefs.getString(PREFS_KEY, "[]") ?: "[]"
+    val arr = org.json.JSONArray(raw)
+    val kept = org.json.JSONArray()
+    for (i in 0 until arr.length()) {
+      val obj = arr.getJSONObject(i)
+      if (obj.optString("id") != id && obj.optString("detected_at") != id) {
+        kept.put(obj)
+      }
+    }
+    prefs.edit().putString(PREFS_KEY, kept.toString()).apply()
   }
 
   fun getDetectedPayments(): List<Map<String, String>> {

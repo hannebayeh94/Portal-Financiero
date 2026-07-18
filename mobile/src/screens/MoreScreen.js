@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import GradientCard from '../components/GradientCard'
 import AutoCaptureGuideModal from '../components/AutoCaptureGuideModal'
+import { useNotifications } from '../context/NotificationContext'
 import { clay, colors, gradients, shadow } from '../theme'
 
 const items = [
@@ -13,7 +14,7 @@ const items = [
   { name: 'Projections', label: 'Proyecciones', icon: 'eye', grad: gradients.projection, desc: 'Escenarios financieros' },
 ]
 
-function Row({ icon, grad, label, desc, onPress }) {
+function Row({ icon, grad, label, desc, onPress, badge }) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}
       style={{ backgroundColor: clay.card, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderColor: clay.border, ...shadow.sm }}>
@@ -24,6 +25,11 @@ function Row({ icon, grad, label, desc, onPress }) {
         <Text style={{ fontSize: 16, fontWeight: '700', color: clay.text }}>{label}</Text>
         <Text style={{ fontSize: 12, color: clay.textMuted, marginTop: 2 }}>{desc}</Text>
       </View>
+      {badge > 0 && (
+        <View style={{ minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 7, backgroundColor: colors.danger[400], alignItems: 'center', justifyContent: 'center', marginRight: 4 }}>
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{badge}</Text>
+        </View>
+      )}
       <Ionicons name="chevron-forward" size={20} color={clay.textMuted} />
     </TouchableOpacity>
   )
@@ -31,6 +37,7 @@ function Row({ icon, grad, label, desc, onPress }) {
 
 export default function MoreScreen({ navigation }) {
   const [guideVisible, setGuideVisible] = useState(false)
+  const { pendingPayments } = useNotifications()
 
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
@@ -45,6 +52,9 @@ export default function MoreScreen({ navigation }) {
         <View style={{ height: 6 }} />
         <Row icon="notifications" grad={gradients.brand} label="Captura automática"
           desc="Detecta pagos de notificaciones automáticamente" onPress={() => setGuideVisible(true)} />
+        <Row icon="receipt" grad={gradients.report} label="Pagos detectados"
+          desc="Revisa y registra los pagos pendientes" badge={pendingPayments.length}
+          onPress={() => navigation.navigate('PaymentsHistory')} />
       </ScrollView>
 
       <AutoCaptureGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} />

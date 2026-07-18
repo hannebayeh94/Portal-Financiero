@@ -47,6 +47,14 @@ export function clearDetectedPayments() {
   } catch {}
 }
 
+// Elimina un solo pago detectado por su id (sin borrar los demas).
+export function removePayment(id) {
+  if (!NativeMod || id == null) return
+  try {
+    NativeMod.removePayment(String(id))
+  } catch {}
+}
+
 export function openNotificationSettings() {
   if (!NativeMod) return
   NativeMod.openNotificationSettings()
