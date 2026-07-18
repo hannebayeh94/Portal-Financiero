@@ -6,6 +6,7 @@ import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
+import ClayDatePicker from '../components/ClayDatePicker'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
@@ -75,7 +76,7 @@ export default function Expenses() {
         <View style={{
           flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
           paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14,
-          backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight,
+          backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.border,
           shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
         }}>
@@ -88,7 +89,7 @@ export default function Expenses() {
           <TouchableOpacity onPress={() => { resetForm(); setEditing(null); setShowModal(true) }}
             style={{
               backgroundColor: colors.danger[400], borderRadius: 16, paddingHorizontal: 18, paddingVertical: 12,
-              shadowColor: clay.shadow, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
+              shadowColor: clay.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 5,
               flexDirection: 'row', alignItems: 'center', gap: 6,
             }}
           >
@@ -136,12 +137,10 @@ export default function Expenses() {
           ) : expenses.map((exp) => (
             <ClayCard key={exp.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14 }}>
               <View style={{
-                width: 40, height: 40, borderRadius: 14,
-                backgroundColor: '#e8ddd0', justifyContent: 'center', alignItems: 'center', marginRight: 12,
-                shadowColor: clay.shadow, shadowOffset: { width: -3, height: -3 },
-                shadowOpacity: 0.4, shadowRadius: 4, elevation: 2,
+                width: 40, height: 40, borderRadius: 12,
+                backgroundColor: colors.danger[50], justifyContent: 'center', alignItems: 'center', marginRight: 12,
               }}>
-                <Ionicons name="arrow-down" size={18} color={colors.danger[400]} />
+                <Ionicons name="arrow-down" size={18} color={colors.danger[500]} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 15, fontWeight: '700', color: clay.text }}>{exp.description}</Text>
@@ -199,7 +198,7 @@ export default function Expenses() {
                 </Text>
               )}
               <ClayInput label="Descripción" value={formData.description} onChangeText={(v) => setFormData({...formData, description: v})} placeholder="Ej: Arriendo" />
-              <ClayInput label="Fecha" value={formData.date} onChangeText={(v) => setFormData({...formData, date: v})} placeholder="YYYY-MM-DD" />
+              <ClayDatePicker label="Fecha" value={formData.date} onChange={(v) => setFormData({...formData, date: v})} />
 
               <Text style={{ fontSize: 11, fontWeight: '800', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Tipo</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -209,8 +208,8 @@ export default function Expenses() {
                       flex: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center',
                       backgroundColor: formData.type === t ? colors.danger[400] : clay.inset,
                       shadowColor: clay.shadow,
-                      shadowOffset: formData.type === t ? { width: 2, height: 2 } : { width: -3, height: -3 },
-                      shadowOpacity: 0.4, shadowRadius: 4, elevation: 2,
+                      shadowOffset: formData.type === t ? { width: 2, height: 2 } : { width: 0, height: 2 },
+                      shadowOpacity: 0.10, shadowRadius: 8, elevation: 2,
                     }}
                   >
                     <Text style={{ fontWeight: '800', fontSize: 13, color: formData.type === t ? '#fff' : clay.text }}>
@@ -232,8 +231,8 @@ export default function Expenses() {
                           flex: 1, borderRadius: 14, paddingVertical: 10, alignItems: 'center',
                           backgroundColor: formData.recurrence_type === opt.v ? colors.primary[500] : clay.inset,
                           shadowColor: clay.shadow,
-                          shadowOffset: formData.recurrence_type === opt.v ? { width: 2, height: 2 } : { width: -3, height: -3 },
-                          shadowOpacity: 0.4, shadowRadius: 4, elevation: 2,
+                          shadowOffset: formData.recurrence_type === opt.v ? { width: 2, height: 2 } : { width: 0, height: 2 },
+                          shadowOpacity: 0.10, shadowRadius: 8, elevation: 2,
                         }}
                       >
                         <Text style={{ fontWeight: '700', fontSize: 12, color: formData.recurrence_type === opt.v ? '#fff' : clay.text }}>{opt.l}</Text>
@@ -259,30 +258,30 @@ function Picker2({ value, onChange, items }) {
   const [open, setOpen] = useState(false)
   return (
     <View>
-      <TouchableOpacity onPress={() => setOpen(!open)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <TouchableOpacity onPress={() => setOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: clay.text }}>
           {items.find(i => i.value === value)?.label || value}
         </Text>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={colors.dark[400]} />
       </TouchableOpacity>
-      {open && (
-        <View style={{
-          position: 'absolute', top: 28, left: -8, right: -8,
-          backgroundColor: clay.card, borderRadius: 16,
-          shadowColor: clay.shadow, shadowOffset: { width: 4, height: 4 },
-          shadowOpacity: 0.5, shadowRadius: 8, elevation: 10,
-          borderWidth: 1, borderColor: clay.highlight, zIndex: 100,
-        }}>
-          {items.map((item) => (
-            <TouchableOpacity key={item.value} onPress={() => { onChange(item.value); setOpen(false) }}
-              style={{ paddingVertical: 10, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#e0d4c8' }}>
-              <Text style={{ fontSize: 14, fontWeight: value === item.value ? '800' : '500', color: value === item.value ? colors.danger[400] : clay.text }}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      <Modal visible={open} transparent animationType="fade">
+        <TouchableOpacity activeOpacity={1} onPress={() => setOpen(false)}
+          style={{ flex: 1, backgroundColor: 'rgba(45,52,54,0.6)', justifyContent: 'center', padding: 40 }}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}
+            style={{ backgroundColor: clay.card, borderRadius: 20, maxHeight: '70%', overflow: 'hidden', borderWidth: 1, borderColor: clay.border, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 12 }}>
+            <ScrollView>
+              {items.map((item) => (
+                <TouchableOpacity key={item.value} onPress={() => { onChange(item.value); setOpen(false) }}
+                  style={{ paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: clay.border, backgroundColor: value === item.value ? clay.inset : 'transparent' }}>
+                  <Text style={{ fontSize: 15, fontWeight: value === item.value ? '800' : '500', color: value === item.value ? colors.danger[400] : clay.text }}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   )
 }

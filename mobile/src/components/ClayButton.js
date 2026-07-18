@@ -1,11 +1,11 @@
-import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native'
-import { clay } from '../theme'
+import { TouchableOpacity, Text, ActivityIndicator } from 'react-native'
+import { clay, colors, shadow } from '../theme'
 
 const variants = {
-  primary: { bg: '#d4a574', active: '#c49464' },
-  danger: { bg: '#c47a7a', active: '#b06a6a' },
-  success: { bg: '#7dab7d', active: '#6d9b6d' },
-  secondary: { bg: '#e8ddd0', active: '#d4c4b4' },
+  primary: { bg: colors.primary[500], fg: '#fff', shadow: shadow.brand },
+  danger: { bg: colors.danger[500], fg: '#fff', shadow: shadow.md },
+  success: { bg: colors.success[500], fg: '#fff', shadow: shadow.md },
+  secondary: { bg: clay.surface, fg: clay.text, shadow: shadow.sm, border: clay.border },
 }
 
 export default function ClayButton({ title, onPress, variant = 'primary', loading, style, textStyle, disabled, small }) {
@@ -18,28 +18,26 @@ export default function ClayButton({ title, onPress, variant = 'primary', loadin
       activeOpacity={0.85}
       style={[{
         backgroundColor: v.bg,
-        borderRadius: small ? 14 : 16,
-        paddingVertical: small ? 10 : 14,
-        paddingHorizontal: small ? 14 : 20,
+        borderRadius: small ? 12 : 16,
+        paddingVertical: small ? 11 : 15,
+        paddingHorizontal: small ? 16 : 20,
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
-        shadowColor: clay.shadow,
-        shadowOffset: { width: 4, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-        elevation: 5,
+        borderWidth: v.border ? 1 : 0,
+        borderColor: v.border,
         opacity: disabled ? 0.5 : 1,
+        ...v.shadow,
       }, style]}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" size={small ? 16 : 20} />
+        <ActivityIndicator color={v.fg} size={small ? 16 : 20} />
       ) : (
         <Text style={[{
-          color: variant === 'secondary' ? clay.text : '#fff',
+          color: v.fg,
           fontWeight: '800',
           fontSize: small ? 13 : 15,
-          letterSpacing: 0.3,
+          letterSpacing: 0.2,
         }, textStyle]}>
           {title}
         </Text>

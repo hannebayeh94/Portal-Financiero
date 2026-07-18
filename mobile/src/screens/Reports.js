@@ -14,7 +14,7 @@ export default function Reports({ navigation }) {
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.border, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
               <Ionicons name="arrow-back" size={22} color={colors.dark[600]} />
@@ -39,7 +39,7 @@ export default function Reports({ navigation }) {
                 { label: 'Deudas', value: cashFlow.debt_payments, color: colors.danger[500] },
                 { label: 'Ahorros', value: cashFlow.savings_deposits, color: colors.success[500] },
               ].map((item, i) => (
-                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: i < 4 ? 1 : 0, borderBottomColor: '#e0d4c8' }}>
+                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: i < 4 ? 1 : 0, borderBottomColor: clay.border }}>
                   <Text style={{ fontSize: 13, color: clay.text }}>{item.label}</Text>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: item.color }}>{formatCurrency(item.value)}</Text>
                 </View>

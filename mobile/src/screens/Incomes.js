@@ -6,6 +6,7 @@ import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
+import ClayDatePicker from '../components/ClayDatePicker'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
@@ -48,12 +49,12 @@ export default function Incomes() {
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.border, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
           <View>
             <Text style={{ fontSize: 14, fontWeight: '600', color: clay.textMuted }}>Ingresos</Text>
             <Text style={{ fontSize: 26, fontWeight: '800', color: clay.text, letterSpacing: -0.5, marginTop: 2 }}>{formatCurrency(total)}</Text>
           </View>
-          <TouchableOpacity onPress={() => { resetForm(); setEditing(null); setShowModal(true) }} style={{ backgroundColor: colors.success[400], borderRadius: 16, paddingHorizontal: 18, paddingVertical: 12, shadowColor: clay.shadow, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <TouchableOpacity onPress={() => { resetForm(); setEditing(null); setShowModal(true) }} style={{ backgroundColor: colors.success[400], borderRadius: 16, paddingHorizontal: 18, paddingVertical: 12, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 5, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name="add" size={20} color="#fff" />
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>Nuevo</Text>
           </TouchableOpacity>
@@ -68,8 +69,8 @@ export default function Incomes() {
               </ClayCard>
             ) : incomes.map((inc) => (
               <ClayCard key={inc.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14 }}>
-                <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: '#e8ddd0', justifyContent: 'center', alignItems: 'center', marginRight: 12, shadowColor: clay.shadow, shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.4, shadowRadius: 4, elevation: 2 }}>
-                  <Ionicons name="arrow-up" size={18} color={colors.success[400]} />
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.success[50], justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                  <Ionicons name="arrow-up" size={18} color={colors.success[500]} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: '700', color: clay.text }}>{inc.description}</Text>
@@ -95,7 +96,7 @@ export default function Incomes() {
               <View style={{ gap: 16 }}>
                 <ClayInput label="Monto" value={formData.amount} onChangeText={(v) => setFormData({...formData, amount: v})} placeholder="0.00" keyboardType="decimal-pad" />
                 <ClayInput label="Descripción" value={formData.description} onChangeText={(v) => setFormData({...formData, description: v})} placeholder="Ej: Salario" />
-                <ClayInput label="Fecha" value={formData.date} onChangeText={(v) => setFormData({...formData, date: v})} placeholder="YYYY-MM-DD" />
+                <ClayDatePicker label="Fecha" value={formData.date} onChange={(v) => setFormData({...formData, date: v})} />
                 <ClayToggle value={formData.recurring} onValueChange={(v) => setFormData({...formData, recurring: v})} label="Ingreso recurrente" />
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 8, marginBottom: 20 }}>
                   <ClayButton title="Cancelar" variant="secondary" onPress={() => setShowModal(false)} style={{ flex: 1 }} />

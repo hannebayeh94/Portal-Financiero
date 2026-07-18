@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
-import { clay, colors } from '../theme'
+import GradientCard from '../components/GradientCard'
+import { clay, colors, gradients, shadow } from '../theme'
 
 export default function Register({ navigation }) {
   const [name, setName] = useState('')
@@ -41,15 +42,12 @@ export default function Register({ navigation }) {
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <View style={{ alignItems: 'center', marginBottom: 28 }}>
-          <View style={{
-            width: 72, height: 72, borderRadius: 24,
-            backgroundColor: clay.card, justifyContent: 'center', alignItems: 'center',
-            shadowColor: clay.shadow, shadowOffset: { width: 6, height: 6 },
-            shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
-            borderWidth: 1, borderColor: clay.highlight, marginBottom: 16,
+          <GradientCard colors={gradients.brand} radius={24} style={{
+            width: 72, height: 72, justifyContent: 'center', alignItems: 'center',
+            marginBottom: 16, ...shadow.brand,
           }}>
-            <Text style={{ fontSize: 32 }}>🚀</Text>
-          </View>
+            <Ionicons name="rocket" size={32} color="#fff" />
+          </GradientCard>
           <Text style={{ fontSize: 26, fontWeight: '800', color: clay.text, letterSpacing: -0.5 }}>
             Crear Cuenta
           </Text>
@@ -59,10 +57,9 @@ export default function Register({ navigation }) {
         </View>
 
         <View style={{
-          backgroundColor: clay.card, borderRadius: 28, padding: 24,
-          shadowColor: clay.shadow, shadowOffset: { width: 8, height: 8 },
-          shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
-          borderWidth: 1, borderColor: clay.highlight,
+          backgroundColor: clay.card, borderRadius: 24, padding: 24,
+          borderWidth: 1, borderColor: clay.border,
+          ...shadow.md,
         }}>
           <View style={{ gap: 18 }}>
             <ClayInput label="Nombre Completo" value={name} onChangeText={setName} placeholder="Tu nombre" />

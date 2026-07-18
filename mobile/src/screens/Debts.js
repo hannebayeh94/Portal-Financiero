@@ -23,7 +23,7 @@ export default function Debts({ navigation }) {
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.highlight, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 14, backgroundColor: clay.card, borderBottomWidth: 1, borderBottomColor: clay.border, shadowColor: clay.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
               <Ionicons name="arrow-back" size={22} color={colors.dark[600]} />

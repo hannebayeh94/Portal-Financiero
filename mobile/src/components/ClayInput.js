@@ -6,12 +6,12 @@ export default function ClayInput({ label, value, onChangeText, placeholder, sec
     <View style={{ marginBottom: 4 }}>
       {label && (
         <Text style={{
-          fontSize: 11,
-          fontWeight: '800',
+          fontSize: 12,
+          fontWeight: '700',
           color: clay.textMuted,
-          textTransform: 'uppercase',
-          letterSpacing: 0.8,
-          marginBottom: 6,
+          letterSpacing: 0.2,
+          marginBottom: 7,
+          marginLeft: 2,
         }}>
           {label}
         </Text>
@@ -21,23 +21,20 @@ export default function ClayInput({ label, value, onChangeText, placeholder, sec
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#b0a090"
+          placeholderTextColor={clay.placeholder}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           multiline={multiline}
           style={[{
-            backgroundColor: clay.inset,
-            borderRadius: 16,
+            backgroundColor: clay.surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: clay.border,
             paddingHorizontal: 16,
             paddingVertical: 14,
             fontSize: 15,
             fontWeight: '600',
             color: clay.text,
-            shadowColor: clay.shadow,
-            shadowOffset: { width: -4, height: -4 },
-            shadowOpacity: 0.5,
-            shadowRadius: 8,
-            elevation: 2,
           }, style]}
         />
         {rightElement && (
