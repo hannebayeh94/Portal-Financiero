@@ -20,6 +20,7 @@ const MONTHS = [
 export default function Incomes() {
   const now = new Date()
   const [incomes, setIncomes] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingIncome, setEditingIncome] = useState(null)
@@ -27,6 +28,7 @@ export default function Incomes() {
     amount: '',
     description: '',
     date: now.toISOString().split('T')[0],
+    category_id: '',
     source: 'salary',
     recurring: false,
     recurrence_type: 'monthly',
@@ -45,18 +47,30 @@ export default function Incomes() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories', { params: { type: 'income' } })
+      setCategories(res.data)
+    } catch (error) { /* silencioso */ }
+  }
+
   useEffect(() => {
     fetchIncomes()
   }, [selectedMonth, selectedYear])
 
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const payload = { ...formData, category_id: formData.category_id || null }
     try {
       if (editingIncome) {
-        await api.put(`/incomes/${editingIncome.id}`, formData)
+        await api.put(`/incomes/${editingIncome.id}`, payload)
         toast.success('Ingreso actualizado')
       } else {
-        await api.post('/incomes', formData)
+        await api.post('/incomes', payload)
         toast.success('Ingreso creado')
       }
       setShowModal(false)
@@ -74,6 +88,7 @@ export default function Incomes() {
       amount: income.amount,
       description: income.description,
       date: income.date.split('T')[0],
+      category_id: income.category_id || '',
       source: income.source,
       recurring: income.recurring,
       recurrence_type: income.recurrence_type || 'monthly',
@@ -97,6 +112,7 @@ export default function Incomes() {
       amount: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
+      category_id: '',
       source: 'salary',
       recurring: false,
       recurrence_type: 'monthly',
@@ -283,6 +299,19 @@ export default function Incomes() {
                     <option key={source.value} value={source.value}>
                       {source.label}
                     </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="input-label">Categoría</label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>

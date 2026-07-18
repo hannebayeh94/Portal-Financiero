@@ -14,6 +14,8 @@ import Calculator from './pages/Calculator'
 import DebtPayoff from './pages/DebtPayoff'
 import Projections from './pages/Projections'
 import Reports from './pages/Reports'
+import Categories from './pages/Categories'
+import Budgets from './pages/Budgets'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -52,6 +54,8 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="incomes" element={<Incomes />} />
         <Route path="expenses" element={<Expenses />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="budgets" element={<Budgets />} />
         <Route path="debts" element={<Debts />} />
         <Route path="debts/:id" element={<DebtDetail />} />
         <Route path="savings" element={<Savings />} />

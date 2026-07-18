@@ -7,6 +7,7 @@ import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
+import CategoryPicker from '../components/CategoryPicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
@@ -19,13 +20,14 @@ export default function Expenses() {
   const now = new Date()
   const kb = useKeyboardHeight()
   const [expenses, setExpenses] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(currentYear)
   const [formData, setFormData] = useState({
-    amount: '', description: '', date: new Date().toISOString().split('T')[0],
+    amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null,
     type: 'variable', recurring: false, recurrence_type: 'monthly', apply_four_per_thousand: false,
   })
 
@@ -37,10 +39,16 @@ export default function Expenses() {
     } finally { setLoading(false) }
   }
 
+  const fetchCategories = async () => {
+    try { const res = await api.get('/categories', { params: { type: 'expense' } }); setCategories(res.data) }
+    catch (e) {}
+  }
+
   useEffect(() => { fetchExpenses() }, [selectedMonth, selectedYear])
+  useEffect(() => { fetchCategories() }, [])
 
   const resetForm = () => setFormData({
-    amount: '', description: '', date: new Date().toISOString().split('T')[0],
+    amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null,
     type: 'variable', recurring: false, recurrence_type: 'monthly', apply_four_per_thousand: false,
   })
 
@@ -55,7 +63,7 @@ export default function Expenses() {
   const handleEdit = (exp) => {
     setEditing(exp)
     setFormData({
-      amount: String(exp.amount), description: exp.description, date: exp.date.split('T')[0],
+      amount: String(exp.amount), description: exp.description, date: exp.date.split('T')[0], category_id: exp.category_id ?? null,
       type: exp.type, recurring: exp.recurring, recurrence_type: exp.recurrence_type || 'monthly',
       apply_four_per_thousand: exp.apply_four_per_thousand,
     })
@@ -156,6 +164,12 @@ export default function Expenses() {
                   <Text style={{ fontSize: 11, fontWeight: '600', color: exp.type === 'fixed' ? colors.primary[500] : colors.warning[500] }}>
                     {exp.type === 'fixed' ? 'Fijo' : 'Variable'}
                   </Text>
+                  {exp.category_name && (
+                    <>
+                      <Text style={{ fontSize: 11, color: clay.textMuted }}>•</Text>
+                      <Text style={{ fontSize: 11, color: clay.textMuted }}>{exp.category_name}</Text>
+                    </>
+                  )}
                   {exp.apply_four_per_thousand && (
                     <>
                       <Text style={{ fontSize: 11, color: clay.textMuted }}>•</Text>
@@ -205,6 +219,7 @@ export default function Expenses() {
               )}
               <ClayInput label="Descripción" value={formData.description} onChangeText={(v) => setFormData({...formData, description: v})} placeholder="Ej: Arriendo" />
               <ClayDatePicker label="Fecha" value={formData.date} onChange={(v) => setFormData({...formData, date: v})} />
+              <CategoryPicker categories={categories} value={formData.category_id} onChange={(v) => setFormData({...formData, category_id: v})} />
 
               <Text style={{ fontSize: 11, fontWeight: '800', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Tipo</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>

@@ -14,12 +14,16 @@ import {
   XMarkIcon,
   CalculatorIcon,
   CreditCardIcon,
+  TagIcon,
+  ChartPieIcon,
 } from '@heroicons/react/24/outline'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Ingresos', href: '/incomes', icon: ArrowTrendingUpIcon },
   { name: 'Egresos', href: '/expenses', icon: ArrowTrendingDownIcon },
+  { name: 'Categorías', href: '/categories', icon: TagIcon },
+  { name: 'Presupuestos', href: '/budgets', icon: ChartPieIcon },
   { name: 'Deudas', href: '/debts', icon: BanknotesIcon },
   { name: 'Ahorros', href: '/savings', icon: WalletIcon },
   { name: 'Calculadora', href: '/calculator', icon: CalculatorIcon },

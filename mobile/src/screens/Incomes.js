@@ -7,6 +7,7 @@ import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
+import CategoryPicker from '../components/CategoryPicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
@@ -16,18 +17,24 @@ export default function Incomes() {
   const now = new Date()
   const kb = useKeyboardHeight()
   const [incomes, setIncomes] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [formData, setFormData] = useState({ amount: '', description: '', date: new Date().toISOString().split('T')[0], source: 'salary', recurring: false, recurrence_type: 'monthly' })
+  const [formData, setFormData] = useState({ amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null, source: 'salary', recurring: false, recurrence_type: 'monthly' })
 
   const fetch = async () => {
     try { const res = await api.get('/incomes'); setIncomes(res.data) }
     catch (e) {} finally { setLoading(false) }
   }
+  const fetchCategories = async () => {
+    try { const res = await api.get('/categories', { params: { type: 'income' } }); setCategories(res.data) }
+    catch (e) {}
+  }
   useEffect(() => { fetch() }, [])
+  useEffect(() => { fetchCategories() }, [])
 
-  const resetForm = () => setFormData({ amount: '', description: '', date: new Date().toISOString().split('T')[0], source: 'salary', recurring: false, recurrence_type: 'monthly' })
+  const resetForm = () => setFormData({ amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null, source: 'salary', recurring: false, recurrence_type: 'monthly' })
   const handleSubmit = async () => {
     if (!formData.amount || !formData.description) { dialog.alert('Error', 'Completa los campos'); return }
     try {
@@ -37,7 +44,7 @@ export default function Incomes() {
   }
   const handleEdit = (inc) => {
     setEditing(inc)
-    setFormData({ amount: String(inc.amount), description: inc.description, date: inc.date.split('T')[0], source: inc.source, recurring: inc.recurring, recurrence_type: inc.recurrence_type || 'monthly' })
+    setFormData({ amount: String(inc.amount), description: inc.description, date: inc.date.split('T')[0], category_id: inc.category_id ?? null, source: inc.source, recurring: inc.recurring, recurrence_type: inc.recurrence_type || 'monthly' })
     setShowModal(true)
   }
   const handleDelete = (id) => {
@@ -80,7 +87,9 @@ export default function Incomes() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: '700', color: clay.text }}>{inc.description}</Text>
-                  <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 2 }}>{formatDateShort(inc.date)}</Text>
+                  <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 2 }}>
+                    {formatDateShort(inc.date)}{inc.category_name ? ` • ${inc.category_name}` : ''}
+                  </Text>
                 </View>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: colors.success[400], marginRight: 8 }}>{formatCurrency(inc.amount)}</Text>
                 <TouchableOpacity onPress={() => handleEdit(inc)} style={{ padding: 6 }}><Ionicons name="create-outline" size={18} color={colors.dark[400]} /></TouchableOpacity>
@@ -103,6 +112,7 @@ export default function Incomes() {
                 <ClayInput label="Monto" value={formData.amount} onChangeText={(v) => setFormData({...formData, amount: v})} placeholder="0.00" keyboardType="decimal-pad" />
                 <ClayInput label="Descripción" value={formData.description} onChangeText={(v) => setFormData({...formData, description: v})} placeholder="Ej: Salario" />
                 <ClayDatePicker label="Fecha" value={formData.date} onChange={(v) => setFormData({...formData, date: v})} />
+                <CategoryPicker categories={categories} value={formData.category_id} onChange={(v) => setFormData({...formData, category_id: v})} />
                 <ClayToggle value={formData.recurring} onValueChange={(v) => setFormData({...formData, recurring: v})} label="Ingreso recurrente" />
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 8, marginBottom: 20 }}>
                   <ClayButton title="Cancelar" variant="secondary" onPress={() => setShowModal(false)} style={{ flex: 1 }} />

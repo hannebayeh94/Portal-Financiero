@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { seedDefaultCategories } = require('../utils/defaultCategories');
 
 router.post('/register', async (req, res) => {
   try {
@@ -18,6 +19,9 @@ router.post('/register', async (req, res) => {
     const [user] = await db('users')
       .insert({ email, password: hashedPassword, name })
       .returning(['id', 'email', 'name', 'role']);
+
+    // Crea las categorías base para el nuevo usuario
+    try { await seedDefaultCategories(db, user.id); } catch (e) { /* no bloquear el registro */ }
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },

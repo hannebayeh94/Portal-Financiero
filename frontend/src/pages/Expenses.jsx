@@ -13,6 +13,7 @@ const MONTHS = [
 export default function Expenses() {
   const now = new Date()
   const [expenses, setExpenses] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
@@ -22,6 +23,7 @@ export default function Expenses() {
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
+    category_id: '',
     type: 'variable',
     recurring: false,
     recurrence_type: 'monthly',
@@ -39,18 +41,30 @@ export default function Expenses() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories', { params: { type: 'expense' } })
+      setCategories(res.data)
+    } catch (error) { /* silencioso */ }
+  }
+
   useEffect(() => {
     fetchExpenses()
   }, [selectedMonth, selectedYear])
 
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const payload = { ...formData, category_id: formData.category_id || null }
     try {
       if (editingExpense) {
-        await api.put(`/expenses/${editingExpense.id}`, formData)
+        await api.put(`/expenses/${editingExpense.id}`, payload)
         toast.success('Egreso actualizado')
       } else {
-        await api.post('/expenses', formData)
+        await api.post('/expenses', payload)
         toast.success('Egreso creado')
       }
       setShowModal(false)
@@ -68,6 +82,7 @@ export default function Expenses() {
       amount: expense.amount,
       description: expense.description,
       date: expense.date.split('T')[0],
+      category_id: expense.category_id || '',
       type: expense.type,
       recurring: expense.recurring,
       recurrence_type: expense.recurrence_type || 'monthly',
@@ -92,6 +107,7 @@ export default function Expenses() {
       amount: '',
       description: '',
       date: new Date().toISOString().split('T')[0],
+      category_id: '',
       type: 'variable',
       recurring: false,
       recurrence_type: 'monthly',
@@ -193,6 +209,7 @@ export default function Expenses() {
                 <tr>
                   <th className="table-header">Fecha</th>
                   <th className="table-header">Descripción</th>
+                  <th className="table-header">Categoría</th>
                   <th className="table-header">Tipo</th>
                   <th className="table-header">Monto</th>
                   <th className="table-header">4×1000</th>
@@ -205,6 +222,11 @@ export default function Expenses() {
                   <tr key={expense.id} className="hover:bg-dark-50 transition-colors">
                     <td className="table-cell">{formatDate(expense.date)}</td>
                     <td className="table-cell font-medium">{expense.description}</td>
+                    <td className="table-cell">
+                      {expense.category_name
+                        ? <span className="text-sm text-dark-600">{expense.category_name}</span>
+                        : <span className="text-xs text-dark-400">—</span>}
+                    </td>
                     <td className="table-cell">
                       <span className={`badge ${expense.type === 'fixed' ? 'badge-primary' : 'badge-warning'}`}>
                         {expense.type === 'fixed' ? 'Fijo' : 'Variable'}
@@ -308,6 +330,19 @@ export default function Expenses() {
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   className="input-field"
                 />
+              </div>
+              <div>
+                <label className="input-label">Categoría</label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="input-label">Tipo</label>

@@ -24,6 +24,7 @@ import Reports from './src/screens/Reports'
 import Calculator from './src/screens/Calculator'
 import Projections from './src/screens/Projections'
 import PaymentsHistory from './src/screens/PaymentsHistory'
+import Budgets from './src/screens/Budgets'
 import AutoExpenseModal from './src/components/AutoExpenseModal'
 
 const Stack = createNativeStackNavigator()
@@ -48,6 +49,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="Reports" component={Reports} options={{ headerShown: false }} />
       <MoreStack.Screen name="Calculator" component={Calculator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
+      <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />
       <MoreStack.Screen name="PaymentsHistory" component={PaymentsHistory} options={{ headerShown: false }} />
     </MoreStack.Navigator>
   )

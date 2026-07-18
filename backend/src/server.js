@@ -10,6 +10,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/budgets', require('./routes/budgets'));
 app.use('/api/incomes', require('./routes/incomes'));
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/debts', require('./routes/debts'));

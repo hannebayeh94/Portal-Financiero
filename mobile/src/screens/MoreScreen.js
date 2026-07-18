@@ -7,6 +7,7 @@ import { useNotifications } from '../context/NotificationContext'
 import { clay, colors, gradients, shadow } from '../theme'
 
 const items = [
+  { name: 'Budgets', label: 'Presupuestos', icon: 'pie-chart', grad: gradients.brand, desc: 'Límites de gasto por categoría' },
   { name: 'Debts', label: 'Deudas', icon: 'card', grad: gradients.debt, desc: 'Controla tus deudas activas' },
   { name: 'Savings', label: 'Ahorros', icon: 'wallet', grad: gradients.savings, desc: 'Metas y cuentas de ahorro' },
   { name: 'Reports', label: 'Reportes', icon: 'document-text', grad: gradients.report, desc: 'Flujo de caja y análisis' },
