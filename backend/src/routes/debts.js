@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const {
+  buildCycles,
+  assignMovementsToCycles,
+  consolidateCycles,
+  periodicRate,
+} = require('../utils/billingCycles');
 
 router.use(authenticateToken);
 
@@ -139,8 +145,8 @@ router.get('/:id/projection', async (req, res) => {
     const totalInterest = projection.reduce((sum, p) => sum + p.interest, 0);
     const totalCapital = projection.reduce((sum, p) => sum + p.capital, 0);
 
-    res.json({ 
-      debt, 
+    res.json({
+      debt,
       projection,
       summary: {
         totalPayments: Math.round(totalPayments * 100) / 100,
@@ -153,12 +159,92 @@ router.get('/:id/projection', async (req, res) => {
   }
 });
 
+// Consolidación por ciclo de corte: agrupa los movimientos reales (consumos/abonos)
+// en la ventana de cada ciclo y encadena el interés generado desde la deuda original.
+router.get('/:id/cycles', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const debt = await db('debts')
+      .where({ id, user_id: req.user.id })
+      .first();
+
+    if (!debt) {
+      return res.status(404).json({ error: 'Deuda no encontrada' });
+    }
+
+    const payments = await db('debt_payments')
+      .where({ debt_id: id })
+      .orderBy('payment_date', 'asc');
+
+    // Número de ciclos: desde el inicio de la deuda hasta ~3 ciclos más allá de hoy (tope 60).
+    const start = new Date(debt.start_date);
+    const now = new Date();
+    const monthsSinceStart = (now.getFullYear() - start.getFullYear()) * 12
+      + (now.getMonth() - start.getMonth());
+    const defaultCount = Math.max(1, Math.min(60, monthsSinceStart + 3));
+    const count = req.query.count
+      ? Math.max(1, Math.min(120, parseInt(req.query.count, 10) || defaultCount))
+      : defaultCount;
+
+    const cycles = buildCycles({
+      cutDay: debt.cut_day || null,
+      dueDay: debt.payment_day || null,
+      count,
+      anchorDate: debt.start_date,
+    });
+
+    const movements = payments.map((p) => ({
+      date: p.payment_date,
+      amount: parseFloat(p.amount) || 0,
+      type: p.type === 'charge' ? 'charge' : 'payment',
+      description: p.description || null,
+    }));
+    const movementsByCycle = assignMovementsToCycles(cycles, movements);
+
+    // Saldo inicial del primer ciclo = deuda original, antes de movimientos. Los
+    // consumos ya están sumados a `total_amount`, así que se descuentan para no
+    // contarlos dos veces (luego se reaplican dentro del ciclo donde ocurrieron).
+    const totalChargeAmount = movements
+      .filter((m) => m.type === 'charge')
+      .reduce((s, m) => s + m.amount, 0);
+    const originalPrincipal = Math.max(0, (parseFloat(debt.total_amount) || 0) - totalChargeAmount);
+
+    const consolidated = consolidateCycles({
+      openingBalance: originalPrincipal,
+      monthlyRate: periodicRate(debt.interest_rate),
+      cycles,
+      movementsByCycle,
+    });
+
+    // Índice del ciclo que contiene la fecha de hoy.
+    const todayIso = now.toISOString().split('T')[0];
+    const currentIndex = consolidated.findIndex(
+      (c) => todayIso >= c.cutStart && todayIso <= c.cutEnd
+    );
+
+    const summary = {
+      count: consolidated.length,
+      currentIndex,
+      cutDay: debt.cut_day || null,
+      dueDay: debt.payment_day || null,
+      originalDebt: Math.round(originalPrincipal * 100) / 100,
+      totalInterest: Math.round(consolidated.reduce((s, c) => s + c.interest, 0) * 100) / 100,
+      totalCharges: Math.round(consolidated.reduce((s, c) => s + c.charges, 0) * 100) / 100,
+      totalPayments: Math.round(consolidated.reduce((s, c) => s + c.payments, 0) * 100) / 100,
+    };
+
+    res.json({ debt, cycles: consolidated, summary });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al generar ciclos de corte' });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const {
       name, total_amount, interest_rate, interest_type,
       monthly_payment, term_months, start_date, end_date,
-      bank_or_lender, payment_day
+      bank_or_lender, payment_day, cut_day
     } = req.body;
 
     const [debt] = await db('debts')
@@ -168,6 +254,7 @@ router.post('/', async (req, res) => {
         term_months, remaining_months: term_months,
         start_date, end_date, bank_or_lender,
         payment_day: payment_day || null,
+        cut_day: cut_day || null,
         user_id: req.user.id
       })
       .returning('*');
@@ -185,7 +272,7 @@ router.put('/:id', async (req, res) => {
       name, total_amount, current_balance, interest_rate,
       interest_type, monthly_payment, term_months,
       remaining_months, start_date, end_date,
-      bank_or_lender, status, payment_day
+      bank_or_lender, status, payment_day, cut_day
     } = req.body;
 
     const [debt] = await db('debts')
@@ -195,6 +282,7 @@ router.put('/:id', async (req, res) => {
         interest_type, monthly_payment, term_months,
         remaining_months, start_date, end_date,
         bank_or_lender, status, payment_day: payment_day || null,
+        cut_day: cut_day || null,
         updated_at: db.fn.now()
       })
       .returning('*');

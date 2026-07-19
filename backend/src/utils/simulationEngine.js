@@ -2,6 +2,8 @@
 // Recibe la configuración del usuario y sus deudas reales activas, y devuelve
 // la proyección mes a mes con saldo disponible/acumulado, más alertas y resumen.
 
+const { buildCycles } = require('./billingCycles');
+
 const MONTHS_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -52,12 +54,15 @@ function computeSimulation(config = {}, debts = []) {
     startMonthIdx = now.getMonth();
   }
 
-  // Estado de amortización por deuda (misma lógica que reports.js/interest-projection).
+  // Estado de amortización por deuda (misma lógica que reports.js/interest-projection),
+  // ahora con día de corte y día de pago para segmentar por ciclo.
   const debtState = (includeDebts ? debts : []).map((d) => ({
     name: d.name,
     balance: parseFloat(d.current_balance) || 0,
     monthlyRate: (parseFloat(d.interest_rate) || 0) / 100 / 12,
     payment: parseFloat(d.monthly_payment) || 0,
+    cutDay: d.cut_day || null,
+    dueDay: d.payment_day || null,
   }));
 
   const months = [];
@@ -82,31 +87,94 @@ function computeSimulation(config = {}, debts = []) {
     return parseFloat(v) || 0;
   };
 
+  // --- Amortización por CICLO DE CORTE ---------------------------------------
+  // Para cada deuda se construye su calendario de ciclos a lo largo del horizonte.
+  // Cada ciclo genera interés (saldo × tasa) y su cuota vence en `dueDate`, que se
+  // asigna al mes calendario correspondiente del flujo de caja. Deudas sin día de
+  // corte caen al modo mensual calendario (compatibilidad con el comportamiento previo).
+  const simStart = new Date(startYear, startMonthIdx, 1);
+  const monthsDiff = (toIso) => {
+    const t = new Date(toIso);
+    return (t.getFullYear() - simStart.getFullYear()) * 12 + (t.getMonth() - simStart.getMonth());
+  };
+
+  const monthlyDebtPayment = new Array(horizon).fill(0);
+  const monthlyDebtInterest = new Array(horizon).fill(0);
+  const remainingByMonth = new Array(horizon).fill(0);
+  const debtCycles = []; // Detalle consolidado por deuda.
+  const cycleAgg = new Map(); // label -> { label, dueDate, interest, payment } (agregado entre deudas).
+
+  for (const d of debtState) {
+    const cycles = buildCycles({
+      cutDay: d.cutDay,
+      dueDay: d.dueDay,
+      count: horizon + 2,
+      anchorDate: simStart,
+    });
+
+    const balByMonth = new Array(horizon).fill(null);
+    let bal = d.balance;
+    const rows = [];
+
+    for (const c of cycles) {
+      if (bal <= 0 || d.payment <= 0) break;
+      const opening = bal;
+      const interest = opening * d.monthlyRate;
+      let capital = d.payment - interest;
+      let pay = d.payment;
+      if (capital >= opening) {
+        // Última cuota: se salda el resto + su interés.
+        capital = opening;
+        pay = opening + interest;
+      }
+      if (capital < 0) capital = 0; // El interés supera la cuota: no se abona capital.
+      bal = Math.max(0, opening - capital);
+
+      const mi = monthsDiff(c.dueDate);
+      if (mi >= 0 && mi < horizon) {
+        monthlyDebtPayment[mi] += pay;
+        monthlyDebtInterest[mi] += interest;
+        balByMonth[mi] = bal;
+        const agg = cycleAgg.get(c.label) || { label: c.label, dueDate: c.dueDate, interest: 0, payment: 0 };
+        agg.interest += interest;
+        agg.payment += pay;
+        cycleAgg.set(c.label, agg);
+      }
+
+      rows.push({
+        label: c.label,
+        cutStart: c.cutStart,
+        cutEnd: c.cutEnd,
+        dueDate: c.dueDate,
+        openingBalance: round(opening),
+        interest: round(interest),
+        capital: round(capital),
+        payment: round(pay),
+        closingBalance: round(bal),
+      });
+    }
+
+    // Rellenar hacia adelante el saldo restante de la deuda mes a mes.
+    let last = round(d.balance);
+    for (let m = 0; m < horizon; m++) {
+      if (balByMonth[m] == null) balByMonth[m] = last;
+      else last = round(balByMonth[m]);
+      remainingByMonth[m] = round(remainingByMonth[m] + balByMonth[m]);
+    }
+
+    debtCycles.push({ name: d.name, cycles: rows });
+  }
+
   for (let m = 0; m < horizon; m++) {
     const ov = overrides[m] || overrides[String(m)] || {};
     const income = round(pickValue(ov, 'income', baseIncome));
     const expense = round(pickValue(ov, 'expense', baseExpense));
 
-    // Cuotas de deuda del mes (amortización con interés + capital).
-    let debtPayment = 0;
-    let debtInterest = 0;
-    for (const d of debtState) {
-      if (d.balance <= 0 || d.payment <= 0) continue;
-      const interest = d.balance * d.monthlyRate;
-      let capital = d.payment - interest;
-      let pay = d.payment;
-      if (capital >= d.balance) {
-        // Última cuota: solo se paga el saldo restante + su interés.
-        capital = d.balance;
-        pay = d.balance + interest;
-      }
-      d.balance = Math.max(0, d.balance - capital);
-      debtPayment += pay;
-      debtInterest += interest;
-    }
-    debtPayment = round(debtPayment);
-    debtInterest = round(debtInterest);
-    const remainingDebt = round(debtState.reduce((s, d) => s + d.balance, 0));
+    // Cuotas de deuda del mes (precalculadas por ciclo de corte, asignadas al mes
+    // calendario del vencimiento de cada ciclo).
+    const debtPayment = round(monthlyDebtPayment[m]);
+    const debtInterest = round(monthlyDebtInterest[m]);
+    const remainingDebt = round(remainingByMonth[m]);
 
     const surplus = round(income - expense - debtPayment);
 
@@ -207,9 +275,12 @@ function computeSimulation(config = {}, debts = []) {
     alertCount: alerts.length,
     hasNegative: alerts.some((a) => a.type === 'negative'),
     exceedsDebtThreshold: alerts.some((a) => a.type === 'debt'),
+    byCycle: Array.from(cycleAgg.values())
+      .map((c) => ({ label: c.label, dueDate: c.dueDate, interest: round(c.interest), payment: round(c.payment) }))
+      .sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0)),
   };
 
-  return { months, alerts, summary };
+  return { months, alerts, summary, debtCycles };
 }
 
 module.exports = { computeSimulation, MONTHS_ES };
