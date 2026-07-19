@@ -25,6 +25,7 @@ import SavingsDetail from './src/screens/SavingsDetail'
 import Reports from './src/screens/Reports'
 import Calculator from './src/screens/Calculator'
 import Projections from './src/screens/Projections'
+import Simulator from './src/screens/Simulator'
 import PaymentsHistory from './src/screens/PaymentsHistory'
 import Budgets from './src/screens/Budgets'
 import Reminders from './src/screens/Reminders'
@@ -53,6 +54,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="Reports" component={Reports} options={{ headerShown: false }} />
       <MoreStack.Screen name="Calculator" component={Calculator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
+      <MoreStack.Screen name="Simulator" component={Simulator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reminders" component={Reminders} options={{ headerShown: false }} />
       <MoreStack.Screen name="Security" component={Security} options={{ headerShown: false }} />

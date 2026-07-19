@@ -13,6 +13,7 @@ const items = [
   { name: 'Reports', label: 'Reportes', icon: 'document-text', grad: gradients.report, desc: 'Flujo de caja y análisis' },
   { name: 'Calculator', label: 'Calculadora', icon: 'calculator', grad: gradients.calc, desc: 'Simula créditos y pagos' },
   { name: 'Projections', label: 'Proyecciones', icon: 'eye', grad: gradients.projection, desc: 'Escenarios financieros' },
+  { name: 'Simulator', label: 'Simulador', icon: 'analytics', grad: gradients.report, desc: 'Simula tu flujo de caja a futuro' },
   { name: 'Reminders', label: 'Recordatorios', icon: 'notifications', grad: gradients.income, desc: 'Avisos de vencimientos y recurrentes' },
   { name: 'Security', label: 'Seguridad', icon: 'lock-closed', grad: gradients.report, desc: 'Bloqueo con PIN y biometría' },
 ]
