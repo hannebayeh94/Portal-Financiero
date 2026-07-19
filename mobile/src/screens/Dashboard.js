@@ -6,8 +6,11 @@ import { dialog } from '../components/ConfirmDialog'
 import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import GradientCard from '../components/GradientCard'
+import { ClayLineChart } from '../components/ClayChart'
 import { clay, colors, gradients, shadow } from '../theme'
 import { formatCurrency, getMonthName, getCurrentMonth } from '../utils/formatters'
+
+const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -144,6 +147,29 @@ export default function Dashboard() {
             </View>
           </ClayCard>
         )}
+
+        {/* Monthly evolution chart */}
+        {monthlyData?.data && (() => {
+          const last6 = monthlyData.data.slice(-6)
+          const hasData = last6.some(m => m.income > 0 || m.expenses > 0)
+          if (!hasData) return null
+          return (
+            <ClayCard>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Ionicons name="trending-up" size={16} color={colors.primary[500]} />
+                <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text, letterSpacing: 0.1 }}>Ingresos vs Egresos</Text>
+              </View>
+              <ClayLineChart
+                labels={last6.map(m => MONTHS_SHORT[m.month - 1])}
+                datasets={[
+                  { data: last6.map(m => m.income), color: colors.success[500] },
+                  { data: last6.map(m => m.expenses), color: colors.danger[500] },
+                ]}
+                legend={['Ingresos', 'Egresos']}
+              />
+            </ClayCard>
+          )
+        })()}
 
         {/* Monthly evolution */}
         {monthlyData?.data && (

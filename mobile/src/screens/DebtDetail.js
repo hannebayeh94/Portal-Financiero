@@ -7,6 +7,7 @@ import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import ClayDatePicker from '../components/ClayDatePicker'
+import { ClayLineChart, ClayPieChart } from '../components/ClayChart'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
 import { clay, colors } from '../theme'
@@ -26,6 +27,7 @@ function Stat({ label, value, color }) {
 export default function DebtDetail({ route, navigation }) {
   const { id } = route.params
   const [debt, setDebt] = useState(null)
+  const [projection, setProjection] = useState(null)
   const [loading, setLoading] = useState(true)
   const [paymentModal, setPaymentModal] = useState(false)
   const [chargeModal, setChargeModal] = useState(false)
@@ -41,6 +43,7 @@ export default function DebtDetail({ route, navigation }) {
     try {
       const r = await api.get(`/debts/${id}`)
       setDebt(r.data)
+      api.get(`/debts/${id}/projection`).then(pr => setProjection(pr.data)).catch(() => {})
     } catch {
       dialog.alert('Error', 'No se pudo cargar la deuda')
       navigation.goBack()
@@ -178,6 +181,28 @@ export default function DebtDetail({ route, navigation }) {
               <Text style={{ fontSize: 11, color: clay.textMuted }}>Total: {formatCurrency(debt.total_amount)}</Text>
             </View>
           </ClayCard>
+
+          {projection?.projection?.length > 1 && (
+            <ClayCard>
+              <ClayLineChart
+                title="Saldo proyectado"
+                labels={projection.projection.map((p, i) => (i % Math.ceil(projection.projection.length / 6) === 0 ? `M${p.month}` : ''))}
+                datasets={[{ data: projection.projection.map(p => p.balance), color: colors.primary[500] }]}
+              />
+            </ClayCard>
+          )}
+
+          {projection?.summary && projection.summary.totalInterest > 0 && (
+            <ClayCard>
+              <ClayPieChart
+                title="Capital vs Intereses (restante)"
+                slices={[
+                  { name: 'Capital', value: projection.summary.totalCapital, color: colors.success[500] },
+                  { name: 'Intereses', value: projection.summary.totalInterest, color: colors.warning[500] },
+                ]}
+              />
+            </ClayCard>
+          )}
 
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <ClayButton title="Registrar pago" variant="success" onPress={() => setPaymentModal(true)} style={{ flex: 1 }} />

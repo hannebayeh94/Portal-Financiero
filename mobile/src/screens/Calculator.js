@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
+import { ClayPieChart } from '../components/ClayChart'
 import { colors, clay } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -44,6 +45,17 @@ export default function Calculator({ navigation }) {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Cuota mensual</Text><Text style={{ fontWeight: '800', color: colors.primary[500] }}>{formatCurrency(monthly)}</Text></View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Total a pagar</Text><Text style={{ fontWeight: '800', color: colors.danger[400] }}>{formatCurrency(totalPayment)}</Text></View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}><Text style={{ color: colors.dark[600] }}>Total intereses</Text><Text style={{ fontWeight: '800', color: colors.warning[500] }}>{formatCurrency(totalInterest)}</Text></View>
+        </ClayCard>
+      )}
+      {n > 0 && r > 0 && totalInterest > 0 && (
+        <ClayCard>
+          <ClayPieChart
+            title="Capital vs Intereses"
+            slices={[
+              { name: 'Capital', value: p, color: colors.primary[500] },
+              { name: 'Intereses', value: totalInterest, color: colors.warning[500] },
+            ]}
+          />
         </ClayCard>
       )}
     </ScrollView>
