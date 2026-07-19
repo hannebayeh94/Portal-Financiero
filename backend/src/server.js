@@ -17,6 +17,7 @@ app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/debts', require('./routes/debts'));
 app.use('/api/savings', require('./routes/savings'));
 app.use('/api/projections', require('./routes/projections'));
+app.use('/api/simulations', require('./routes/simulations'));
 app.use('/api/reports', require('./routes/reports'));
 
 app.get('/api/health', (req, res) => {
