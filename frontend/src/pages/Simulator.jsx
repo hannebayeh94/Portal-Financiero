@@ -146,6 +146,8 @@ export default function Simulator() {
   const months = result?.months || []
   const alerts = result?.alerts || []
   const summary = result?.summary || {}
+  const debtCycles = result?.debtCycles || []
+  const byCycle = summary.byCycle || []
 
   const allocTotalPct = ALLOC_ROWS.reduce((s, r) => s + (parseFloat(config.allocations[r.key]) || 0), 0)
 
@@ -490,6 +492,71 @@ export default function Simulator() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Por ciclo de corte */}
+        {config.includeDebts && debtCycles.some(d => d.cycles.length > 0) && (
+          <div className="clay-card p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #a08090, #906c80)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                <BanknotesIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Por ciclo de corte</h3>
+                <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
+                  Interés generado y saldo de cada deuda, segmentado por ciclo (la cuota se asigna al mes de su vencimiento).
+                </p>
+              </div>
+            </div>
+
+            {byCycle.length > 0 && (
+              <div className="overflow-x-auto">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--clay-text-muted)' }}>Consolidado por ciclo (todas las deudas)</p>
+                <table className="clay-table w-full">
+                  <thead><tr><th>Ciclo (vence)</th><th>Interés generado</th><th>Cuota total</th></tr></thead>
+                  <tbody>
+                    {byCycle.map((c, i) => (
+                      <tr key={i}>
+                        <td className="font-semibold text-xs" style={{ color: 'var(--clay-text-muted)' }}>{c.label}</td>
+                        <td style={{ color: 'var(--clay-red)' }}>{formatCurrency(c.interest)}</td>
+                        <td style={{ color: 'var(--clay-text)' }}>{formatCurrency(c.payment)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {debtCycles.filter(d => d.cycles.length > 0).map((d, di) => (
+              <div key={di}>
+                <p className="text-sm font-semibold mb-2" style={{ color: 'var(--clay-text)' }}>{d.name}</p>
+                <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                  <table className="clay-table w-full">
+                    <thead className="sticky top-0 z-10">
+                      <tr>
+                        <th>Ciclo</th><th>Corte</th><th>Vence</th>
+                        <th>Saldo inicial</th><th>Interés</th><th>Capital</th><th>Cuota</th><th>Saldo cierre</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {d.cycles.map((c, ci) => (
+                        <tr key={ci}>
+                          <td className="font-semibold text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>{c.label}</td>
+                          <td className="text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>{c.cutStart} – {c.cutEnd}</td>
+                          <td className="text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>{c.dueDate}</td>
+                          <td>{formatCurrency(c.openingBalance)}</td>
+                          <td style={{ color: 'var(--clay-red)' }}>{formatCurrency(c.interest)}</td>
+                          <td style={{ color: 'var(--clay-green)' }}>{formatCurrency(c.capital)}</td>
+                          <td>{formatCurrency(c.payment)}</td>
+                          <td className="font-bold">{formatCurrency(c.closingBalance)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -21,6 +21,7 @@ export default function Debts() {
     end_date: '',
     bank_or_lender: '',
     payment_day: '',
+    cut_day: '',
     status: 'active',
   })
 
@@ -73,6 +74,7 @@ export default function Debts() {
       end_date: debt.end_date.split('T')[0],
       bank_or_lender: debt.bank_or_lender,
       payment_day: debt.payment_day != null ? String(debt.payment_day) : '',
+      cut_day: debt.cut_day != null ? String(debt.cut_day) : '',
       status: debt.status,
     })
     setShowModal(true)
@@ -103,6 +105,7 @@ export default function Debts() {
       end_date: '',
       bank_or_lender: '',
       payment_day: '',
+      cut_day: '',
       status: 'active',
     })
   }
@@ -368,9 +371,22 @@ export default function Debts() {
                     max="31"
                     value={formData.payment_day}
                     onChange={(e) => setFormData({ ...formData, payment_day: e.target.value })}
-                    placeholder="Ej: 5"
+                    placeholder="Ej: 20"
                     className="input-field"
                   />
+                </div>
+                <div>
+                  <label className="input-label">Día de corte (1-31)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formData.cut_day}
+                    onChange={(e) => setFormData({ ...formData, cut_day: e.target.value })}
+                    placeholder="Ej: 10"
+                    className="input-field"
+                  />
+                  <p className="text-xs text-dark-400 mt-1">Fecha de corte del estado de cuenta. El ciclo va de un corte al siguiente.</p>
                 </div>
                 <div>
                   <label className="input-label">Fecha de Inicio</label>

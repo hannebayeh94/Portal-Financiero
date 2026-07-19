@@ -25,6 +25,7 @@ export default function DebtDetail() {
   const navigate = useNavigate()
   const [debt, setDebt] = useState(null)
   const [projection, setProjection] = useState(null)
+  const [cyclesData, setCyclesData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showChargeModal, setShowChargeModal] = useState(false)
@@ -55,6 +56,8 @@ export default function DebtDetail() {
     start_date: '',
     end_date: '',
     bank_or_lender: '',
+    payment_day: '',
+    cut_day: '',
     status: 'active',
   })
 
@@ -64,12 +67,14 @@ export default function DebtDetail() {
 
   const fetchDebtData = async () => {
     try {
-      const [debtRes, projectionRes] = await Promise.all([
+      const [debtRes, projectionRes, cyclesRes] = await Promise.all([
         api.get(`/debts/${id}`),
         api.get(`/debts/${id}/projection`),
+        api.get(`/debts/${id}/cycles`),
       ])
       setDebt(debtRes.data)
       setProjection(projectionRes.data)
+      setCyclesData(cyclesRes.data)
     } catch (error) {
       toast.error('Error al cargar datos de la deuda')
       navigate('/debts')
@@ -116,6 +121,8 @@ export default function DebtDetail() {
       start_date: debt.start_date.split('T')[0],
       end_date: debt.end_date.split('T')[0],
       bank_or_lender: debt.bank_or_lender,
+      payment_day: debt.payment_day != null ? String(debt.payment_day) : '',
+      cut_day: debt.cut_day != null ? String(debt.cut_day) : '',
       status: debt.status,
     })
     setShowEditModal(true)
@@ -450,6 +457,80 @@ export default function DebtDetail() {
         )}
       </div>
 
+      {/* Billing cycles */}
+      {cyclesData?.cycles?.length > 0 && (
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-display font-bold text-dark-900">Ciclos de corte</h3>
+            {cyclesData.summary?.cutDay ? (
+              <span className="text-sm text-dark-500">
+                Corte día {cyclesData.summary.cutDay} · Pago día {cyclesData.summary.dueDay || '—'}
+              </span>
+            ) : (
+              <span className="text-sm text-dark-400">Sin día de corte (ciclo mensual)</span>
+            )}
+          </div>
+          <p className="text-sm text-dark-500 mb-4">
+            Interés generado y movimientos consolidados por ciclo, desde la deuda original ({formatCurrency(cyclesData.summary.originalDebt)}).
+          </p>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div className="p-4 bg-dark-50 rounded-xl">
+              <p className="text-xs text-dark-500 mb-1">Deuda original</p>
+              <p className="text-lg font-bold text-dark-900">{formatCurrency(cyclesData.summary.originalDebt)}</p>
+            </div>
+            <div className="p-4 bg-danger-50 rounded-xl">
+              <p className="text-xs text-dark-500 mb-1">Interés total generado</p>
+              <p className="text-lg font-bold text-danger-600">{formatCurrency(cyclesData.summary.totalInterest)}</p>
+            </div>
+            <div className="p-4 bg-warning-50 rounded-xl">
+              <p className="text-xs text-dark-500 mb-1">Consumos</p>
+              <p className="text-lg font-bold text-dark-900">{formatCurrency(cyclesData.summary.totalCharges)}</p>
+            </div>
+            <div className="p-4 bg-success-50 rounded-xl">
+              <p className="text-xs text-dark-500 mb-1">Abonos</p>
+              <p className="text-lg font-bold text-success-600">{formatCurrency(cyclesData.summary.totalPayments)}</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-dark-50">
+                <tr>
+                  <th className="table-header">Ciclo</th>
+                  <th className="table-header">Corte</th>
+                  <th className="table-header">Vence</th>
+                  <th className="table-header text-right">Saldo inicial</th>
+                  <th className="table-header text-right">Interés</th>
+                  <th className="table-header text-right">Consumos</th>
+                  <th className="table-header text-right">Abonos</th>
+                  <th className="table-header text-right">Saldo cierre</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dark-100">
+                {cyclesData.cycles.map((c, i) => (
+                  <tr key={i} className={`hover:bg-dark-50 transition-colors ${i === cyclesData.summary.currentIndex ? 'bg-primary-50' : ''}`}>
+                    <td className="table-cell font-medium">
+                      {c.label}
+                      {i === cyclesData.summary.currentIndex && (
+                        <span className="badge badge-primary ml-2">Actual</span>
+                      )}
+                    </td>
+                    <td className="table-cell text-dark-500">{formatDate(c.cutStart)} – {formatDate(c.cutEnd)}</td>
+                    <td className="table-cell text-dark-500">{formatDate(c.dueDate)}</td>
+                    <td className="table-cell text-right">{formatCurrency(c.openingBalance)}</td>
+                    <td className="table-cell text-right text-danger-600 font-medium">{formatCurrency(c.interest)}</td>
+                    <td className="table-cell text-right">{c.charges > 0 ? `+${formatCurrency(c.charges)}` : '—'}</td>
+                    <td className="table-cell text-right text-success-600">{c.payments > 0 ? `−${formatCurrency(c.payments)}` : '—'}</td>
+                    <td className="table-cell text-right font-bold">{formatCurrency(c.closingBalance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
@@ -602,6 +683,14 @@ export default function DebtDetail() {
                 <div>
                   <label className="input-label">Fecha Fin</label>
                   <input type="date" required value={editData.end_date} onChange={(e) => setEditData({ ...editData, end_date: e.target.value })} className="input-field" />
+                </div>
+                <div>
+                  <label className="input-label">Día de pago (1-31)</label>
+                  <input type="number" min="1" max="31" value={editData.payment_day} onChange={(e) => setEditData({ ...editData, payment_day: e.target.value })} placeholder="Ej: 20" className="input-field" />
+                </div>
+                <div>
+                  <label className="input-label">Día de corte (1-31)</label>
+                  <input type="number" min="1" max="31" value={editData.cut_day} onChange={(e) => setEditData({ ...editData, cut_day: e.target.value })} placeholder="Ej: 10" className="input-field" />
                 </div>
                 <div>
                   <label className="input-label">Estado</label>
