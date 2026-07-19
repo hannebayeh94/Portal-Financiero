@@ -13,6 +13,7 @@ import SavingsDetail from './pages/SavingsDetail'
 import Calculator from './pages/Calculator'
 import DebtPayoff from './pages/DebtPayoff'
 import Projections from './pages/Projections'
+import Simulator from './pages/Simulator'
 import Reports from './pages/Reports'
 import Categories from './pages/Categories'
 import Budgets from './pages/Budgets'
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="calculator" element={<Calculator />} />
         <Route path="debt-payoff" element={<DebtPayoff />} />
         <Route path="projections" element={<Projections />} />
+        <Route path="simulator" element={<Simulator />} />
         <Route path="reports" element={<Reports />} />
       </Route>
     </Routes>

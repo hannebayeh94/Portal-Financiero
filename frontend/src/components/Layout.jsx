@@ -16,6 +16,7 @@ import {
   CreditCardIcon,
   TagIcon,
   ChartPieIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline'
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Calculadora', href: '/calculator', icon: CalculatorIcon },
   { name: 'Pago Deudas', href: '/debt-payoff', icon: CreditCardIcon },
   { name: 'Proyecciones', href: '/projections', icon: ChartBarIcon },
+  { name: 'Simulador', href: '/simulator', icon: BeakerIcon },
   { name: 'Reportes', href: '/reports', icon: DocumentChartBarIcon },
 ]
 
