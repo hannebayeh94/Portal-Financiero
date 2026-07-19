@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, Text, TouchableOpacity } from 'react-native'
+import { View, Text, TouchableOpacity, AppState } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import PinPad from '../components/PinPad'
 import GradientCard from '../components/GradientCard'
@@ -13,9 +13,12 @@ export default function LockScreen({ onUnlock, bioEnabled }) {
   const busyRef = useRef(false)
 
   const tryBiometric = useCallback(async () => {
-    // Evita llamadas solapadas (auto-prompt al montar + toque del botón),
-    // que en Android se cancelan entre sí y dejan el botón sin responder.
     if (!bioEnabled || busyRef.current) return
+    // Nunca lanzar el prompt si la app no está en primer plano: en background
+    // authenticateAsync no puede mostrar el diálogo y la promesa queda colgada,
+    // lo que dejaría el botón inservible al volver. El botón siempre está activo
+    // porque cuando el usuario lo toca la app está, por definición, en foreground.
+    if (AppState.currentState !== 'active') return
     const ok = await biometricAvailable()
     setCanBio(ok)
     if (!ok) return
@@ -28,7 +31,24 @@ export default function LockScreen({ onUnlock, bioEnabled }) {
     }
   }, [bioEnabled, onUnlock])
 
-  useEffect(() => { tryBiometric() }, [tryBiometric])
+  // Mostrar el botón (comprobar disponibilidad) sin lanzar el prompt.
+  useEffect(() => {
+    let alive = true
+    if (bioEnabled) biometricAvailable().then((ok) => { if (alive) setCanBio(ok) })
+    return () => { alive = false }
+  }, [bioEnabled])
+
+  // Lanzar la biometría cuando la app está/vuelve a primer plano.
+  useEffect(() => {
+    if (AppState.currentState === 'active') tryBiometric()
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') tryBiometric()
+      // Si la app se va a background, libera la guardia por si una llamada
+      // anterior quedó pendiente, para no bloquear el próximo intento.
+      else busyRef.current = false
+    })
+    return () => sub.remove()
+  }, [tryBiometric])
 
   useEffect(() => {
     if (pin.length === 4) {
