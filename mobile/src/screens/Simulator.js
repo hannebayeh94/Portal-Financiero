@@ -101,6 +101,12 @@ export default function Simulator({ navigation }) {
       else overrides[idx] = entry
       return { ...prev, overrides }
     })
+  const resetMonth = (idx) =>
+    setConfig(prev => {
+      const overrides = { ...prev.overrides }
+      delete overrides[idx]
+      return { ...prev, overrides }
+    })
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -166,7 +172,7 @@ export default function Simulator({ navigation }) {
               </View>
               <NumRow label="Mes inicial (AAAA-MM)" value={config.startMonth} onChange={(t) => setField('startMonth', t)} raw />
               <NumRow label="Ingreso base mensual" value={config.baseIncome} onChange={(v) => setField('baseIncome', v)} />
-              <NumRow label="Gasto base mensual" value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
+              <NumRow label="Gasto base mensual (sin cuotas de deuda)" value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
               <NumRow label="Saldo inicial" value={config.startingBalance} onChange={(v) => setField('startingBalance', v)} />
               <NumRow label="Umbral de alerta de deuda" value={config.debtThreshold} onChange={(v) => setField('debtThreshold', v)} />
               <TouchableOpacity onPress={() => setField('includeDebts', !config.includeDebts)} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
@@ -219,9 +225,9 @@ export default function Simulator({ navigation }) {
 
             {/* Resumen */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              <StatCard label="Saldo final" value={formatCurrency(summary.endBalance || 0)} color={(summary.endBalance || 0) >= 0 ? colors.primary[600] : colors.danger[500]} />
+              <StatCard label="Disponible acum." value={formatCurrency(summary.endBalance || 0)} color={(summary.endBalance || 0) >= 0 ? colors.primary[600] : colors.danger[500]} />
+              <StatCard label="Apartado acum." value={formatCurrency(summary.savedEndBalance || 0)} color={colors.success[500]} />
               <StatCard label="Saldo mínimo" value={formatCurrency(summary.minBalance || 0)} color={(summary.minBalance || 0) >= 0 ? colors.success[500] : colors.danger[500]} />
-              <StatCard label="Total asignado" value={formatCurrency(summary.totalAllocated || 0)} color={clay.text} />
               <StatCard label="Intereses deuda" value={formatCurrency(summary.totalDebtInterest || 0)} color={clay.text} />
             </View>
 
@@ -250,16 +256,27 @@ export default function Simulator({ navigation }) {
               </>
             )}
 
-            {/* Escenarios "¿y si...?" */}
+            {/* Datos por mes (editable) */}
             <ClayCard>
-              <SectionTitle icon="calendar-outline" title='Escenarios "¿y si...?"' desc="Ajusta el ingreso o gasto de un mes puntual" />
+              <SectionTitle icon="calendar-outline" title="Datos por mes (editable)" desc="Edita el ingreso o gasto de cualquier mes (ej: prima en noviembre)" />
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+                <Text style={{ width: 60 }} />
+                <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: colors.success[500] }}>Ingreso</Text>
+                <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: colors.danger[500] }}>Gasto (op.)</Text>
+                <View style={{ width: 28 }} />
+              </View>
               {months.map((m) => {
                 const ov = config.overrides[m.index] || {}
+                const incomeVal = ov.income ?? config.baseIncome
+                const expenseVal = ov.expense ?? config.baseExpense
                 return (
                   <View key={m.index} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <Text style={{ width: 64, fontSize: 12, fontWeight: '700', color: clay.textMuted }}>{m.label}</Text>
-                    <SmallInput value={ov.incomeDelta} placeholder="+ ing" onChange={(t) => setOverride(m.index, 'incomeDelta', t)} />
-                    <SmallInput value={ov.expenseDelta} placeholder="+ gas" onChange={(t) => setOverride(m.index, 'expenseDelta', t)} />
+                    <Text style={{ width: 60, fontSize: 12, fontWeight: '700', color: m.overridden ? colors.primary[500] : clay.textMuted }}>{m.label}</Text>
+                    <SmallInput value={incomeVal} placeholder="0" onChange={(t) => setOverride(m.index, 'income', t)} />
+                    <SmallInput value={expenseVal} placeholder="0" onChange={(t) => setOverride(m.index, 'expense', t)} />
+                    <TouchableOpacity onPress={() => resetMonth(m.index)} disabled={!m.overridden} style={{ width: 28, alignItems: 'center', opacity: m.overridden ? 1 : 0.25 }}>
+                      <Ionicons name="refresh-outline" size={18} color={clay.textMuted} />
+                    </TouchableOpacity>
                   </View>
                 )
               })}
@@ -274,7 +291,7 @@ export default function Simulator({ navigation }) {
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator>
                   <View>
-                    <TableRow header cells={['Mes', 'Ingreso', 'Gasto', 'Cuota', 'Ahorro', 'Inv.', 'Emerg.', 'Disp.', 'Acum.', 'Deuda']} />
+                    <TableRow header cells={['Mes', 'Ingreso', 'Gasto', 'Cuota', 'Exced.', 'Ahorro', 'Inv.', 'Emerg.', 'Disp.', 'Acum.', 'Deuda']} />
                     {months.map((m) => (
                       <TableRow
                         key={m.index}
@@ -283,6 +300,7 @@ export default function Simulator({ navigation }) {
                           formatCurrency(m.income),
                           formatCurrency(m.expense),
                           formatCurrency(m.debtPayment),
+                          formatCurrency(m.surplus),
                           formatCurrency(m.savings),
                           formatCurrency(m.investment),
                           formatCurrency(m.emergency),
@@ -290,7 +308,7 @@ export default function Simulator({ navigation }) {
                           formatCurrency(m.accumulated),
                           formatCurrency(m.remainingDebt),
                         ]}
-                        negativeCols={{ 7: m.available < 0, 8: m.accumulated < 0 }}
+                        negativeCols={{ 4: m.surplus < 0, 8: m.available < 0, 9: m.accumulated < 0 }}
                       />
                     ))}
                   </View>
@@ -415,7 +433,7 @@ function StatCard({ label, value, color }) {
 }
 
 function TableRow({ header, cells, negativeCols = {} }) {
-  const widths = [64, 92, 92, 92, 84, 84, 84, 92, 96, 96]
+  const widths = [64, 92, 92, 92, 92, 84, 84, 84, 92, 96, 96]
   return (
     <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: clay.border, backgroundColor: header ? clay.surface : clay.card }}>
       {cells.map((c, i) => (

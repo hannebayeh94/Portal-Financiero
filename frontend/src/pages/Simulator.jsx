@@ -136,6 +136,12 @@ export default function Simulator() {
       else overrides[idx] = entry
       return { ...prev, overrides }
     })
+  const resetMonth = (idx) =>
+    setConfig(prev => {
+      const overrides = { ...prev.overrides }
+      delete overrides[idx]
+      return { ...prev, overrides }
+    })
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -317,7 +323,7 @@ export default function Simulator() {
             <Field label="Ingreso base mensual">
               <MoneyInput value={config.baseIncome} onChange={(v) => setField('baseIncome', v)} />
             </Field>
-            <Field label="Gasto base mensual">
+            <Field label="Gasto base mensual (sin cuotas de deuda)">
               <MoneyInput value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
             </Field>
             <Field label="Umbral de alerta de deuda">
@@ -395,9 +401,9 @@ export default function Simulator() {
 
         {/* Resumen */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Saldo final acumulado" value={formatCurrency(summary.endBalance || 0)} accent={(summary.endBalance || 0) >= 0 ? 'var(--clay-accent)' : 'var(--clay-red)'} />
-          <StatCard label="Saldo mínimo" value={formatCurrency(summary.minBalance || 0)} accent={(summary.minBalance || 0) >= 0 ? 'var(--clay-green)' : 'var(--clay-red)'} />
-          <StatCard label="Total asignado" value={formatCurrency(summary.totalAllocated || 0)} accent="var(--clay-text)" />
+          <StatCard label="Disponible acumulado" value={formatCurrency(summary.endBalance || 0)} accent={(summary.endBalance || 0) >= 0 ? 'var(--clay-accent)' : 'var(--clay-red)'} />
+          <StatCard label="Apartado acumulado" value={formatCurrency(summary.savedEndBalance || 0)} accent="var(--clay-green)" />
+          <StatCard label="Saldo mínimo del mes" value={formatCurrency(summary.minBalance || 0)} accent={(summary.minBalance || 0) >= 0 ? 'var(--clay-green)' : 'var(--clay-red)'} />
           <StatCard label="Intereses de deuda" value={formatCurrency(summary.totalDebtInterest || 0)} accent="var(--clay-text)" />
         </div>
 
@@ -415,90 +421,72 @@ export default function Simulator() {
           </>
         )}
 
-        {/* Escenarios hipotéticos */}
-        <div className="clay-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #70a0b8, #6090a8)', boxShadow: 'var(--clay-shadow-sm)' }}>
-              <CalendarDaysIcon className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Escenarios "¿y si...?"</h3>
-              <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>Ajusta ingreso o gasto de un mes puntual (ej: prima en noviembre, gasto extra en diciembre)</p>
-            </div>
-          </div>
-          <div className="overflow-x-auto max-h-96 overflow-y-auto">
-            <table className="clay-table w-full">
-              <thead className="sticky top-0 z-10">
-                <tr>
-                  <th>Mes</th>
-                  <th>Ajuste ingreso (+/-)</th>
-                  <th>Ajuste gasto (+/-)</th>
-                  <th>Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {months.map((m) => {
-                  const ov = config.overrides[m.index] || {}
-                  return (
-                    <tr key={m.index}>
-                      <td className="font-semibold text-xs" style={{ color: 'var(--clay-text-muted)' }}>{m.label}</td>
-                      <td>
-                        <input type="number" value={ov.incomeDelta ?? ''} onChange={(e) => setOverride(m.index, 'incomeDelta', e.target.value)} placeholder="0" className="clay-input w-32 px-2 py-1.5 text-sm" />
-                      </td>
-                      <td>
-                        <input type="number" value={ov.expenseDelta ?? ''} onChange={(e) => setOverride(m.index, 'expenseDelta', e.target.value)} placeholder="0" className="clay-input w-32 px-2 py-1.5 text-sm" />
-                      </td>
-                      <td>
-                        <input type="text" value={ov.note ?? ''} onChange={(e) => setOverride(m.index, 'note', e.target.value)} placeholder="—" className="clay-input w-full px-2 py-1.5 text-sm" />
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Tabla detallada */}
+        {/* Tabla editable mes a mes */}
         {months.length > 0 && (
           <div className="clay-card overflow-hidden">
-            <div className="p-5 flex items-center justify-between">
-              <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Detalle mensual</h3>
-              {computing && <span className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>Calculando…</span>}
+            <div className="p-5 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #70a0b8, #6090a8)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                  <CalendarDaysIcon className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Detalle mensual (editable)</h3>
+                  <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
+                    Edita el <strong>ingreso</strong> o <strong>gasto</strong> de cualquier mes (ej: prima en noviembre). Reconcilia:
+                    Ingreso − Gasto − Cuota = <em>Excedente</em>; Excedente − Apartado = <em>Disponible</em>.
+                  </p>
+                </div>
+              </div>
+              {computing && <span className="text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>Calculando…</span>}
             </div>
-            <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
+            <div className="overflow-x-auto max-h-[560px] overflow-y-auto">
               <table className="clay-table w-full">
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th>Mes</th>
-                    <th>Ingreso</th>
-                    <th>Gasto</th>
+                    <th>Ingreso ✎</th>
+                    <th>Gasto (op.) ✎</th>
                     <th>Cuota deuda</th>
+                    <th>= Excedente</th>
                     <th>Ahorro</th>
                     <th>Inversión</th>
-                    <th>Emergencia</th>
-                    <th>Disponible</th>
-                    <th>Acumulado</th>
-                    <th>Deuda restante</th>
+                    <th>Emerg.</th>
+                    <th>= Disponible</th>
+                    <th>Acum. disp.</th>
+                    <th>Deuda rest.</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {months.map((m) => (
-                    <tr key={m.index}>
-                      <td className="font-semibold text-xs" style={{ color: 'var(--clay-text-muted)' }}>
-                        {m.label}{m.note ? ` · ${m.note}` : ''}
-                      </td>
-                      <td style={{ color: 'var(--clay-green)' }}>{formatCurrency(m.income)}</td>
-                      <td style={{ color: 'var(--clay-red)' }}>{formatCurrency(m.expense)}</td>
-                      <td style={{ color: 'var(--clay-text-muted)' }}>{formatCurrency(m.debtPayment)}</td>
-                      <td>{formatCurrency(m.savings)}</td>
-                      <td>{formatCurrency(m.investment)}</td>
-                      <td>{formatCurrency(m.emergency)}</td>
-                      <td className="font-semibold" style={{ color: m.available >= 0 ? 'var(--clay-text)' : 'var(--clay-red)' }}>{formatCurrency(m.available)}</td>
-                      <td className="font-bold" style={{ color: m.accumulated >= 0 ? 'var(--clay-accent)' : 'var(--clay-red)' }}>{formatCurrency(m.accumulated)}</td>
-                      <td style={{ color: 'var(--clay-text-muted)' }}>{formatCurrency(m.remainingDebt)}</td>
-                    </tr>
-                  ))}
+                  {months.map((m) => {
+                    const ov = config.overrides[m.index] || {}
+                    const incomeVal = ov.income ?? config.baseIncome
+                    const expenseVal = ov.expense ?? config.baseExpense
+                    return (
+                      <tr key={m.index} style={m.overridden ? { background: 'rgba(112, 160, 184, 0.10)' } : undefined}>
+                        <td className="font-semibold text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>{m.label}</td>
+                        <td>
+                          <input type="number" value={incomeVal} onChange={(e) => setOverride(m.index, 'income', e.target.value)} className="clay-input w-28 px-2 py-1.5 text-sm" style={{ color: 'var(--clay-green)' }} />
+                        </td>
+                        <td>
+                          <input type="number" value={expenseVal} onChange={(e) => setOverride(m.index, 'expense', e.target.value)} className="clay-input w-28 px-2 py-1.5 text-sm" style={{ color: 'var(--clay-red)' }} />
+                        </td>
+                        <td style={{ color: 'var(--clay-text-muted)' }}>{formatCurrency(m.debtPayment)}</td>
+                        <td className="font-semibold" style={{ color: m.surplus >= 0 ? 'var(--clay-text)' : 'var(--clay-red)' }}>{formatCurrency(m.surplus)}</td>
+                        <td>{formatCurrency(m.savings)}</td>
+                        <td>{formatCurrency(m.investment)}</td>
+                        <td>{formatCurrency(m.emergency)}</td>
+                        <td className="font-semibold" style={{ color: m.available >= 0 ? 'var(--clay-text)' : 'var(--clay-red)' }}>{formatCurrency(m.available)}</td>
+                        <td className="font-bold" style={{ color: m.accumulated >= 0 ? 'var(--clay-accent)' : 'var(--clay-red)' }}>{formatCurrency(m.accumulated)}</td>
+                        <td style={{ color: 'var(--clay-text-muted)' }}>{formatCurrency(m.remainingDebt)}</td>
+                        <td>
+                          {m.overridden && (
+                            <button onClick={() => resetMonth(m.index)} title="Volver al valor base" className="clay-btn px-2 py-1 text-xs">↺</button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

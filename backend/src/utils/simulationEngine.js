@@ -71,10 +71,21 @@ function computeSimulation(config = {}, debts = []) {
   let totalDebtInterest = 0;
   let debtAlertRaised = false;
 
+  let savedAccumulated = 0; // Total apartado (ahorro + inversión + emergencias) acumulado.
+
+  // Un override define el valor ABSOLUTO de ingreso/gasto de ese mes; si no hay
+  // override, se usa el valor base. `expense` es SOLO gasto operativo (la cuota de
+  // deuda se calcula aparte y NO debe incluirse aquí, para no contarla dos veces).
+  const pickValue = (ov, key, base) => {
+    const v = ov[key];
+    if (v === null || v === undefined || v === '') return parseFloat(base) || 0;
+    return parseFloat(v) || 0;
+  };
+
   for (let m = 0; m < horizon; m++) {
     const ov = overrides[m] || overrides[String(m)] || {};
-    const income = round((parseFloat(baseIncome) || 0) + (parseFloat(ov.incomeDelta) || 0));
-    const expense = round((parseFloat(baseExpense) || 0) + (parseFloat(ov.expenseDelta) || 0));
+    const income = round(pickValue(ov, 'income', baseIncome));
+    const expense = round(pickValue(ov, 'expense', baseExpense));
 
     // Cuotas de deuda del mes (amortización con interés + capital).
     let debtPayment = 0;
@@ -116,8 +127,10 @@ function computeSimulation(config = {}, debts = []) {
       }
     }
     const allocated = round(savings + investment + emergency);
+    const outflow = round(expense + debtPayment); // Total salidas obligatorias del mes.
     const available = round(surplus - allocated);
     accumulated = round(accumulated + available);
+    savedAccumulated = round(savedAccumulated + allocated);
 
     if (accumulated < minBalance) minBalance = accumulated;
     totalIncome += income;
@@ -140,13 +153,17 @@ function computeSimulation(config = {}, debts = []) {
       expense,
       debtPayment,
       debtInterest,
+      outflow,
+      surplus,
       savings,
       investment,
       emergency,
       allocated,
       available,
       accumulated,
+      savedAccumulated,
       remainingDebt,
+      overridden: ov.income != null && ov.income !== '' || ov.expense != null && ov.expense !== '',
       note: ov.note || null,
     });
 
@@ -183,6 +200,7 @@ function computeSimulation(config = {}, debts = []) {
     totalIncome: round(totalIncome),
     totalExpense: round(totalExpense),
     totalAllocated: round(totalAllocated),
+    savedEndBalance: round(savedAccumulated),
     totalDebtPaid: round(totalDebtPaid),
     totalDebtInterest: round(totalDebtInterest),
     finalDebt: months.length ? months[months.length - 1].remainingDebt : 0,
