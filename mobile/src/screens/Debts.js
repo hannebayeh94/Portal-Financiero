@@ -25,6 +25,7 @@ const emptyForm = {
   start_date: today(),
   end_date: '',
   payment_day: '',
+  cut_day: '',
   status: 'active',
 }
 
@@ -86,6 +87,7 @@ export default function Debts({ navigation }) {
       start_date: (d.start_date || '').split('T')[0],
       end_date: (d.end_date || '').split('T')[0],
       payment_day: d.payment_day != null ? String(d.payment_day) : '',
+      cut_day: d.cut_day != null ? String(d.cut_day) : '',
       status: d.status,
     })
     setModalVisible(true)
@@ -200,7 +202,8 @@ export default function Debts({ navigation }) {
                 <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, marginBottom: 7, marginLeft: 2 }}>Tipo de interés</Text>
                 <Segmented options={[{ label: 'Fijo', value: 'fixed' }, { label: 'Variable', value: 'variable' }]} value={form.interest_type} onChange={(v) => set('interest_type', v)} />
                 <ClayInput label="Plazo (meses)" value={form.term_months} onChangeText={(v) => set('term_months', v)} keyboardType="numeric" placeholder="0" />
-                <ClayInput label="Día de pago (1-31)" value={form.payment_day} onChangeText={(v) => set('payment_day', v)} keyboardType="numeric" placeholder="Ej: 5" />
+                <ClayInput label="Día de pago (1-31)" value={form.payment_day} onChangeText={(v) => set('payment_day', v)} keyboardType="numeric" placeholder="Ej: 20" />
+                <ClayInput label="Día de corte (1-31)" value={form.cut_day} onChangeText={(v) => set('cut_day', v)} keyboardType="numeric" placeholder="Ej: 10" />
                 <ClayDatePicker label="Fecha de inicio" value={form.start_date} onChange={(v) => set('start_date', v)} />
                 <ClayDatePicker label="Fecha de finalización" value={form.end_date} onChange={(v) => set('end_date', v)} />
                 {editing && (

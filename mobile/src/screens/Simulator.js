@@ -111,6 +111,8 @@ export default function Simulator({ navigation }) {
   const months = result?.months || []
   const alerts = result?.alerts || []
   const summary = result?.summary || {}
+  const debtCycles = result?.debtCycles || []
+  const byCycle = summary.byCycle || []
 
   const refetchSaved = async () => {
     try { const res = await api.get('/simulations'); setSavedList(res.data) } catch {}
@@ -315,6 +317,47 @@ export default function Simulator({ navigation }) {
                 </ScrollView>
               </ClayCard>
             )}
+
+            {/* Por ciclo de corte */}
+            {config.includeDebts && debtCycles.some(d => d.cycles.length > 0) && (
+              <ClayCard style={{ padding: 0, overflow: 'hidden' }}>
+                <View style={{ padding: 14 }}>
+                  <SectionTitle icon="card-outline" title="Por ciclo de corte" desc="Interés y saldo de cada deuda, por ciclo (cuota asignada al mes de vencimiento)" />
+                  {byCycle.map((c, i) => (
+                    <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, borderBottomWidth: i < byCycle.length - 1 ? 1 : 0, borderBottomColor: clay.border }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: clay.textMuted, width: 90 }}>{c.label}</Text>
+                      <Text style={{ flex: 1, fontSize: 12, color: colors.danger[500], textAlign: 'right' }}>Interés {formatCurrency(c.interest)}</Text>
+                      <Text style={{ flex: 1, fontSize: 12, color: clay.text, textAlign: 'right' }}>Cuota {formatCurrency(c.payment)}</Text>
+                    </View>
+                  ))}
+                </View>
+                {debtCycles.filter(d => d.cycles.length > 0).map((d, di) => (
+                  <View key={di}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: clay.text, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 4 }}>{d.name}</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator>
+                      <View>
+                        <CycleRow header cells={['Ciclo', 'Vence', 'Inicial', 'Interés', 'Capital', 'Cuota', 'Cierre']} />
+                        {d.cycles.map((c, ci) => (
+                          <CycleRow
+                            key={ci}
+                            cells={[
+                              c.label,
+                              c.dueDate,
+                              formatCurrency(c.openingBalance),
+                              formatCurrency(c.interest),
+                              formatCurrency(c.capital),
+                              formatCurrency(c.payment),
+                              formatCurrency(c.closingBalance),
+                            ]}
+                            interestCol
+                          />
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                ))}
+              </ClayCard>
+            )}
           </>
         )}
       </ScrollView>
@@ -428,6 +471,28 @@ function StatCard({ label, value, color }) {
     <View style={{ flexGrow: 1, flexBasis: '46%', backgroundColor: clay.card, borderRadius: 16, borderWidth: 1, borderColor: clay.border, padding: 14, ...shadow.sm }}>
       <Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</Text>
       <Text style={{ fontSize: 18, fontWeight: '800', color, marginTop: 3 }}>{value}</Text>
+    </View>
+  )
+}
+
+function CycleRow({ header, cells, interestCol }) {
+  const widths = [96, 100, 104, 96, 96, 96, 104]
+  return (
+    <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: clay.border, backgroundColor: header ? clay.surface : clay.card }}>
+      {cells.map((c, i) => (
+        <Text
+          key={i}
+          numberOfLines={1}
+          style={{
+            width: widths[i], paddingHorizontal: 8, paddingVertical: 10,
+            fontSize: header ? 11 : 12,
+            fontWeight: header ? '800' : (i === 0 ? '700' : '600'),
+            color: header ? clay.textMuted : (interestCol && i === 3 ? colors.danger[500] : (i === 0 ? clay.textMuted : clay.text)),
+          }}
+        >
+          {c}
+        </Text>
+      ))}
     </View>
   )
 }

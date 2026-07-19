@@ -28,6 +28,7 @@ export default function DebtDetail({ route, navigation }) {
   const { id } = route.params
   const [debt, setDebt] = useState(null)
   const [projection, setProjection] = useState(null)
+  const [cyclesData, setCyclesData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [paymentModal, setPaymentModal] = useState(false)
   const [chargeModal, setChargeModal] = useState(false)
@@ -44,6 +45,7 @@ export default function DebtDetail({ route, navigation }) {
       const r = await api.get(`/debts/${id}`)
       setDebt(r.data)
       api.get(`/debts/${id}/projection`).then(pr => setProjection(pr.data)).catch(() => {})
+      api.get(`/debts/${id}/cycles`).then(cr => setCyclesData(cr.data)).catch(() => {})
     } catch {
       dialog.alert('Error', 'No se pudo cargar la deuda')
       navigation.goBack()
@@ -237,6 +239,44 @@ export default function DebtDetail({ route, navigation }) {
               </ClayCard>
             )
           })}
+
+          {cyclesData?.cycles?.length > 0 && (
+            <>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: clay.text, marginTop: 12, marginLeft: 2 }}>Ciclos de corte</Text>
+              <Text style={{ fontSize: 12, color: clay.textMuted, marginLeft: 2, marginBottom: 2 }}>
+                {cyclesData.summary?.cutDay
+                  ? `Corte día ${cyclesData.summary.cutDay} · Pago día ${cyclesData.summary.dueDay || '—'}`
+                  : 'Sin día de corte (ciclo mensual)'}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Stat label="Deuda original" value={formatCurrency(cyclesData.summary.originalDebt)} />
+                <Stat label="Interés total" value={formatCurrency(cyclesData.summary.totalInterest)} color={colors.danger[400]} />
+              </View>
+              {cyclesData.cycles.map((c, i) => {
+                const isCurrent = i === cyclesData.summary.currentIndex
+                return (
+                  <ClayCard key={i} style={{ paddingVertical: 12, paddingHorizontal: 14, borderWidth: isCurrent ? 1.5 : 0, borderColor: isCurrent ? colors.primary[500] : 'transparent' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: clay.text }}>{c.label}{isCurrent ? '  •  Actual' : ''}</Text>
+                      <Text style={{ fontSize: 11, color: clay.textMuted }}>vence {formatDate(c.dueDate)}</Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>{formatDate(c.cutStart)} – {formatDate(c.cutEnd)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                      <View><Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Inicial</Text><Text style={{ fontSize: 13, fontWeight: '700', color: clay.text }}>{formatCurrency(c.openingBalance)}</Text></View>
+                      <View><Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Interés</Text><Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger[400] }}>{formatCurrency(c.interest)}</Text></View>
+                      <View><Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Cierre</Text><Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>{formatCurrency(c.closingBalance)}</Text></View>
+                    </View>
+                    {(c.charges > 0 || c.payments > 0) && (
+                      <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
+                        {c.charges > 0 && <Text style={{ fontSize: 11, color: colors.danger[400] }}>Consumos +{formatCurrency(c.charges)}</Text>}
+                        {c.payments > 0 && <Text style={{ fontSize: 11, color: colors.success[500] }}>Abonos −{formatCurrency(c.payments)}</Text>}
+                      </View>
+                    )}
+                  </ClayCard>
+                )
+              })}
+            </>
+          )}
         </View>
       </ScrollView>
 
