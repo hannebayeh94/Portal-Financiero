@@ -84,6 +84,7 @@ export default function Simulator() {
         const recItems = recRes.data?.items || []
         setRecurringExpenses(recItems)
         setRecurringSel(new Set(recItems.map(i => i.id)))
+        const recurringTotal = recItems.reduce((s, i) => s + (i.monthlyAmount || 0), 0)
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
         const withExpense = rows.filter(r => r.expenses > 0)
@@ -99,7 +100,9 @@ export default function Simulator() {
         setConfig(prev => ({
           ...prev,
           baseIncome: avgIncome,
-          baseExpense: avgExpense,
+          // Si hay egresos recurrentes, el gasto base parte de ellos (lo pedido);
+          // si no, cae al promedio real de gastos.
+          baseExpense: recItems.length ? recurringTotal : avgExpense,
           debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0,
         }))
       } catch (error) {
@@ -150,19 +153,20 @@ export default function Simulator() {
       return { ...prev, overrides }
     })
 
-  const toggleRecurring = (id) =>
-    setRecurringSel(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   const recurringSum = recurringExpenses
     .filter(i => recurringSel.has(i.id))
     .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-  const applyRecurring = () => {
-    setField('baseExpense', recurringSum)
-    toast.success('Gasto base actualizado desde tus egresos recurrentes')
+  // Al marcar/desmarcar, el gasto base se recalcula en vivo → las tablas se
+  // actualizan solas (no hace falta un botón aparte).
+  const toggleRecurring = (id) => {
+    const next = new Set(recurringSel)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setRecurringSel(next)
+    const sum = recurringExpenses
+      .filter(i => next.has(i.id))
+      .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+    setField('baseExpense', sum)
   }
 
   const months = result?.months || []
@@ -370,17 +374,13 @@ export default function Simulator() {
                 <div>
                   <p className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>Gasto base desde egresos recurrentes</p>
                   <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
-                    Marca los gastos fijos que se repiten cada mes y úsalos como gasto base (semanal y anual se normalizan a mensual).
+                    Marca los gastos fijos que se repiten cada mes; el <strong>gasto base se actualiza solo</strong> con lo marcado (semanal y anual se normalizan a mensual).
                   </p>
                 </div>
-                <button
-                  onClick={applyRecurring}
-                  disabled={recurringSum <= 0}
-                  className="clay-btn-primary px-3 py-2 text-sm whitespace-nowrap"
-                  style={recurringSum <= 0 ? { opacity: 0.5 } : undefined}
-                >
-                  Usar {formatCurrency(recurringSum)}
-                </button>
+                <div className="text-right whitespace-nowrap">
+                  <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>Gasto base</p>
+                  <p className="text-base font-bold" style={{ color: 'var(--clay-red)' }}>{formatCurrency(recurringSum)}</p>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {recurringExpenses.map(it => {

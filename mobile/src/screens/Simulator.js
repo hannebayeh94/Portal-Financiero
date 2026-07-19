@@ -67,6 +67,7 @@ export default function Simulator({ navigation }) {
         const recItems = recRes.data?.items || []
         setRecurringExpenses(recItems)
         setRecurringSel(new Set(recItems.map(i => i.id)))
+        const recurringTotal = recItems.reduce((s, i) => s + (i.monthlyAmount || 0), 0)
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
         const withExpense = rows.filter(r => r.expenses > 0)
@@ -74,7 +75,7 @@ export default function Simulator({ navigation }) {
         const avgExpense = withExpense.length ? Math.round(withExpense.reduce((s, r) => s + r.expenses, 0) / withExpense.length) : 0
         const activeDebts = (debtRes.data || []).filter(d => d.status === 'active')
         const totalDebt = activeDebts.reduce((s, d) => s + (parseFloat(d.current_balance) || 0), 0)
-        setConfig(prev => ({ ...prev, baseIncome: avgIncome, baseExpense: avgExpense, debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0 }))
+        setConfig(prev => ({ ...prev, baseIncome: avgIncome, baseExpense: recItems.length ? recurringTotal : avgExpense, debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0 }))
       } catch {}
       finally { setLoading(false) }
     })()
@@ -115,17 +116,20 @@ export default function Simulator({ navigation }) {
       return { ...prev, overrides }
     })
 
-  const toggleRecurring = (id) =>
-    setRecurringSel(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   const recurringSum = recurringExpenses
     .filter(i => recurringSel.has(i.id))
     .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-  const applyRecurring = () => setField('baseExpense', recurringSum)
+  // Al marcar/desmarcar se recalcula el gasto base en vivo → las tablas se actualizan solas.
+  const toggleRecurring = (id) => {
+    const next = new Set(recurringSel)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setRecurringSel(next)
+    const sum = recurringExpenses
+      .filter(i => next.has(i.id))
+      .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+    setField('baseExpense', sum)
+  }
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -208,9 +212,12 @@ export default function Simulator({ navigation }) {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>Gasto base desde egresos recurrentes</Text>
-                      <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>Marca tus gastos fijos y úsalos como gasto base (semanal/anual se normalizan a mensual).</Text>
+                      <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>Marca tus gastos fijos; el gasto base se actualiza solo (semanal/anual se normalizan a mensual).</Text>
                     </View>
-                    <ClayButton title={`Usar ${formatCurrency(recurringSum)}`} small disabled={recurringSum <= 0} onPress={applyRecurring} />
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Gasto base</Text>
+                      <Text style={{ fontSize: 15, fontWeight: '800', color: colors.danger[400] }}>{formatCurrency(recurringSum)}</Text>
+                    </View>
                   </View>
                   {recurringExpenses.map(it => {
                     const checked = recurringSel.has(it.id)
