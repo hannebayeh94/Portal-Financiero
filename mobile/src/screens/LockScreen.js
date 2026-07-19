@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import PinPad from '../components/PinPad'
@@ -10,14 +10,21 @@ export default function LockScreen({ onUnlock, bioEnabled }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [canBio, setCanBio] = useState(false)
+  const busyRef = useRef(false)
 
   const tryBiometric = useCallback(async () => {
-    if (!bioEnabled) return
+    // Evita llamadas solapadas (auto-prompt al montar + toque del botón),
+    // que en Android se cancelan entre sí y dejan el botón sin responder.
+    if (!bioEnabled || busyRef.current) return
     const ok = await biometricAvailable()
     setCanBio(ok)
-    if (ok) {
-      const success = await authenticateBiometric()
+    if (!ok) return
+    busyRef.current = true
+    try {
+      const { success } = await authenticateBiometric()
       if (success) onUnlock()
+    } finally {
+      busyRef.current = false
     }
   }, [bioEnabled, onUnlock])
 

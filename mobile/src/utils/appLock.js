@@ -35,12 +35,23 @@ export async function biometricAvailable() {
 
 export async function authenticateBiometric() {
   try {
-    const r = await LocalAuthentication.authenticateAsync({
+    let r = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Desbloquea Portal Financiero',
       cancelLabel: 'Usar PIN',
       fallbackLabel: 'Usar PIN',
       disableDeviceFallback: true,
     })
-    return !!r.success
-  } catch { return false }
+    // Si el sensor quedó bloqueado por intentos fallidos (lockout), Android
+    // no vuelve a mostrar el diálogo. Reintentamos permitiendo la credencial
+    // del dispositivo para limpiar el bloqueo y recuperar la biometría.
+    if (!r.success && (r.error === 'lockout' || r.error === 'lockout_permanent')) {
+      r = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Desbloquea Portal Financiero',
+        disableDeviceFallback: false,
+      })
+    }
+    return { success: !!r.success, error: r.error || null }
+  } catch (e) {
+    return { success: false, error: 'exception' }
+  }
 }
