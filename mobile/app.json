@@ -29,6 +29,18 @@
     "plugins": [
       "expo-notifications",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0c951a3e-d9cf-4e11-a4a0-12125d882ef8"
+      }
+    },
+    "owner": "hannebayeh94",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0c951a3e-d9cf-4e11-a4a0-12125d882ef8"
+    }
   }
 }
