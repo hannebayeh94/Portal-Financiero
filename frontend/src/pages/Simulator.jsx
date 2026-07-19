@@ -66,6 +66,9 @@ export default function Simulator() {
   const [saveName, setSaveName] = useState('')
   const [currentId, setCurrentId] = useState(null)
 
+  const [recurringExpenses, setRecurringExpenses] = useState([])
+  const [recurringSel, setRecurringSel] = useState(() => new Set())
+
   const debounceRef = useRef(null)
 
   // Carga inicial: siembra ingreso/gasto base desde datos reales y umbral desde deudas.
@@ -73,10 +76,14 @@ export default function Simulator() {
     ;(async () => {
       try {
         const year = new Date().getFullYear()
-        const [evoRes, debtRes] = await Promise.all([
+        const [evoRes, debtRes, recRes] = await Promise.all([
           api.get(`/reports/monthly-evolution?year=${year}`),
           api.get('/debts').catch(() => ({ data: [] })),
+          api.get('/expenses/recurring').catch(() => ({ data: { items: [] } })),
         ])
+        const recItems = recRes.data?.items || []
+        setRecurringExpenses(recItems)
+        setRecurringSel(new Set(recItems.map(i => i.id)))
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
         const withExpense = rows.filter(r => r.expenses > 0)
@@ -142,6 +149,21 @@ export default function Simulator() {
       delete overrides[idx]
       return { ...prev, overrides }
     })
+
+  const toggleRecurring = (id) =>
+    setRecurringSel(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const recurringSum = recurringExpenses
+    .filter(i => recurringSel.has(i.id))
+    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+  const applyRecurring = () => {
+    setField('baseExpense', recurringSum)
+    toast.success('Gasto base actualizado desde tus egresos recurrentes')
+  }
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -341,6 +363,43 @@ export default function Simulator() {
             </button>
             <span className="text-sm" style={{ color: 'var(--clay-text)' }}>Integrar mis deudas reales (amortización automática de cuotas e intereses)</span>
           </div>
+
+          {recurringExpenses.length > 0 && (
+            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #e0d4c8' }}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>Gasto base desde egresos recurrentes</p>
+                  <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
+                    Marca los gastos fijos que se repiten cada mes y úsalos como gasto base (semanal y anual se normalizan a mensual).
+                  </p>
+                </div>
+                <button
+                  onClick={applyRecurring}
+                  disabled={recurringSum <= 0}
+                  className="clay-btn-primary px-3 py-2 text-sm whitespace-nowrap"
+                  style={recurringSum <= 0 ? { opacity: 0.5 } : undefined}
+                >
+                  Usar {formatCurrency(recurringSum)}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {recurringExpenses.map(it => {
+                  const checked = recurringSel.has(it.id)
+                  return (
+                    <label key={it.id} className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ background: '#e8ddd0' }}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleRecurring(it.id)} className="h-4 w-4" style={{ accentColor: 'var(--clay-accent)' }} />
+                      <span className="flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate block" style={{ color: 'var(--clay-text)' }}>{it.description}</span>
+                        <span className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
+                          {formatCurrency(it.monthlyAmount)}/mes{it.recurrence_type !== 'monthly' ? ` · ${it.recurrence_type === 'weekly' ? 'semanal' : 'anual'}` : ''}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Asignaciones */}

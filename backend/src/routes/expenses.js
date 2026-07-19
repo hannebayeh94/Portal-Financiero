@@ -82,6 +82,48 @@ router.get('/by-category', async (req, res) => {
   }
 });
 
+// Egresos recurrentes normalizados a monto mensual, deduplicados por
+// descripción + categoría (se toma la ocurrencia más reciente para no contar
+// varias veces el mismo gasto registrado mes a mes). Reutilizable, p. ej. por el
+// simulador para proponer el gasto base a partir de gastos fijos reales.
+router.get('/recurring', async (req, res) => {
+  try {
+    const rows = await db('expenses')
+      .select('expenses.*', 'categories.name as category_name')
+      .leftJoin('categories', 'expenses.category_id', 'categories.id')
+      .where('expenses.user_id', req.user.id)
+      .where('expenses.recurring', true)
+      .orderBy('expenses.date', 'desc');
+
+    const toMonthly = (amount, type) => {
+      const a = parseFloat(amount) || 0;
+      if (type === 'weekly') return Math.round((a * 52) / 12);
+      if (type === 'yearly') return Math.round(a / 12);
+      return Math.round(a); // 'monthly' o sin tipo
+    };
+
+    const seen = new Map(); // clave: descripción+categoría → ocurrencia más reciente
+    for (const r of rows) {
+      const key = `${(r.description || '').trim().toLowerCase()}|${r.category_id || 0}`;
+      if (!seen.has(key)) seen.set(key, r);
+    }
+
+    const items = Array.from(seen.values()).map((r) => ({
+      id: r.id,
+      description: r.description,
+      category_name: r.category_name || null,
+      amount: parseFloat(r.amount) || 0,
+      recurrence_type: r.recurrence_type || 'monthly',
+      monthlyAmount: toMonthly(r.amount, r.recurrence_type),
+    }));
+    const totalMonthly = items.reduce((s, i) => s + i.monthlyAmount, 0);
+
+    res.json({ items, totalMonthly });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener egresos recurrentes' });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { amount, description, date, category_id, type, recurring, recurrence_type, apply_four_per_thousand } = req.body;

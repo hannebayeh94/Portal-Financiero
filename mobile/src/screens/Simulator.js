@@ -50,16 +50,23 @@ export default function Simulator({ navigation }) {
   const [saveName, setSaveName] = useState('')
   const [currentId, setCurrentId] = useState(null)
 
+  const [recurringExpenses, setRecurringExpenses] = useState([])
+  const [recurringSel, setRecurringSel] = useState(() => new Set())
+
   const debounceRef = useRef(null)
 
   useEffect(() => {
     ;(async () => {
       try {
         const year = new Date().getFullYear()
-        const [evoRes, debtRes] = await Promise.all([
+        const [evoRes, debtRes, recRes] = await Promise.all([
           api.get(`/reports/monthly-evolution?year=${year}`),
           api.get('/debts').catch(() => ({ data: [] })),
+          api.get('/expenses/recurring').catch(() => ({ data: { items: [] } })),
         ])
+        const recItems = recRes.data?.items || []
+        setRecurringExpenses(recItems)
+        setRecurringSel(new Set(recItems.map(i => i.id)))
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
         const withExpense = rows.filter(r => r.expenses > 0)
@@ -107,6 +114,18 @@ export default function Simulator({ navigation }) {
       delete overrides[idx]
       return { ...prev, overrides }
     })
+
+  const toggleRecurring = (id) =>
+    setRecurringSel(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const recurringSum = recurringExpenses
+    .filter(i => recurringSel.has(i.id))
+    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+  const applyRecurring = () => setField('baseExpense', recurringSum)
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -183,6 +202,34 @@ export default function Simulator({ navigation }) {
                 </View>
                 <Text style={{ flex: 1, fontSize: 13, color: clay.text }}>Integrar mis deudas reales (cuotas e intereses)</Text>
               </TouchableOpacity>
+
+              {recurringExpenses.length > 0 && (
+                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: clay.border }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>Gasto base desde egresos recurrentes</Text>
+                      <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>Marca tus gastos fijos y úsalos como gasto base (semanal/anual se normalizan a mensual).</Text>
+                    </View>
+                    <ClayButton title={`Usar ${formatCurrency(recurringSum)}`} small disabled={recurringSum <= 0} onPress={applyRecurring} />
+                  </View>
+                  {recurringExpenses.map(it => {
+                    const checked = recurringSel.has(it.id)
+                    return (
+                      <TouchableOpacity key={it.id} activeOpacity={0.7} onPress={() => toggleRecurring(it.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
+                        <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: checked ? colors.primary[500] : clay.border, backgroundColor: checked ? colors.primary[500] : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                          {checked && <Ionicons name="checkmark" size={15} color="#fff" />}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: clay.text }}>{it.description}</Text>
+                          <Text style={{ fontSize: 11, color: clay.textMuted }}>
+                            {formatCurrency(it.monthlyAmount)}/mes{it.recurrence_type !== 'monthly' ? ` · ${it.recurrence_type === 'weekly' ? 'semanal' : 'anual'}` : ''}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              )}
             </ClayCard>
 
             {/* Asignaciones */}
