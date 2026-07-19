@@ -20,6 +20,7 @@ export default function Debts() {
     start_date: new Date().toISOString().split('T')[0],
     end_date: '',
     bank_or_lender: '',
+    payment_day: '',
     status: 'active',
   })
 
@@ -71,6 +72,7 @@ export default function Debts() {
       start_date: debt.start_date.split('T')[0],
       end_date: debt.end_date.split('T')[0],
       bank_or_lender: debt.bank_or_lender,
+      payment_day: debt.payment_day != null ? String(debt.payment_day) : '',
       status: debt.status,
     })
     setShowModal(true)
@@ -100,8 +102,21 @@ export default function Debts() {
       start_date: new Date().toISOString().split('T')[0],
       end_date: '',
       bank_or_lender: '',
+      payment_day: '',
       status: 'active',
     })
+  }
+
+  const nextDueInfo = (paymentDay) => {
+    if (!paymentDay) return null
+    const day = Math.min(Math.max(parseInt(paymentDay, 10), 1), 28)
+    const now = new Date()
+    let due = new Date(now.getFullYear(), now.getMonth(), day)
+    if (due < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+      due = new Date(now.getFullYear(), now.getMonth() + 1, day)
+    }
+    const days = Math.round((due - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
+    return { day, days }
   }
 
   const activeDebts = debts.filter(d => d.status === 'active')
@@ -225,6 +240,14 @@ export default function Debts() {
                     <span className="text-sm text-dark-500">Meses restantes</span>
                     <span className="font-semibold">{debt.remaining_months}</span>
                   </div>
+                  {debt.status === 'active' && nextDueInfo(debt.payment_day) && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-dark-500">Próximo pago</span>
+                      <span className={`font-semibold ${nextDueInfo(debt.payment_day).days <= 3 ? 'text-danger-600' : 'text-dark-700'}`}>
+                        Día {nextDueInfo(debt.payment_day).day} · en {nextDueInfo(debt.payment_day).days}d
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-dark-100">
@@ -334,6 +357,18 @@ export default function Debts() {
                     required
                     value={formData.term_months}
                     onChange={(e) => setFormData({ ...formData, term_months: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Día de pago (1-31)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formData.payment_day}
+                    onChange={(e) => setFormData({ ...formData, payment_day: e.target.value })}
+                    placeholder="Ej: 5"
                     className="input-field"
                   />
                 </div>

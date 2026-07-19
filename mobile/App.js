@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { NotificationProvider } from './src/context/NotificationContext'
+import { RemindersProvider } from './src/context/RemindersContext'
 import DialogProvider from './src/components/ConfirmDialog'
 import { clay, colors } from './src/theme'
 
@@ -25,6 +26,7 @@ import Calculator from './src/screens/Calculator'
 import Projections from './src/screens/Projections'
 import PaymentsHistory from './src/screens/PaymentsHistory'
 import Budgets from './src/screens/Budgets'
+import Reminders from './src/screens/Reminders'
 import AutoExpenseModal from './src/components/AutoExpenseModal'
 
 const Stack = createNativeStackNavigator()
@@ -50,6 +52,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="Calculator" component={Calculator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
       <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />
+      <MoreStack.Screen name="Reminders" component={Reminders} options={{ headerShown: false }} />
       <MoreStack.Screen name="PaymentsHistory" component={PaymentsHistory} options={{ headerShown: false }} />
     </MoreStack.Navigator>
   )
@@ -59,6 +62,7 @@ function MainTabs() {
   const insets = useSafeAreaInsets()
   return (
     <NotificationProvider>
+    <RemindersProvider>
     <Tab.Navigator
       screenOptions={({ route }) => {
         const tab = tabConfig.find(t => t.name === route.name)
@@ -90,6 +94,7 @@ function MainTabs() {
       <Tab.Screen name="Más" component={MoreStackScreen} />
     </Tab.Navigator>
       <AutoExpenseModal />
+    </RemindersProvider>
     </NotificationProvider>
   )
 }

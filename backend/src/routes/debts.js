@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
     const {
       name, total_amount, interest_rate, interest_type,
       monthly_payment, term_months, start_date, end_date,
-      bank_or_lender
+      bank_or_lender, payment_day
     } = req.body;
 
     const [debt] = await db('debts')
@@ -167,6 +167,7 @@ router.post('/', async (req, res) => {
         interest_rate, interest_type, monthly_payment,
         term_months, remaining_months: term_months,
         start_date, end_date, bank_or_lender,
+        payment_day: payment_day || null,
         user_id: req.user.id
       })
       .returning('*');
@@ -184,7 +185,7 @@ router.put('/:id', async (req, res) => {
       name, total_amount, current_balance, interest_rate,
       interest_type, monthly_payment, term_months,
       remaining_months, start_date, end_date,
-      bank_or_lender, status
+      bank_or_lender, status, payment_day
     } = req.body;
 
     const [debt] = await db('debts')
@@ -193,7 +194,8 @@ router.put('/:id', async (req, res) => {
         name, total_amount, current_balance, interest_rate,
         interest_type, monthly_payment, term_months,
         remaining_months, start_date, end_date,
-        bank_or_lender, status, updated_at: db.fn.now()
+        bank_or_lender, status, payment_day: payment_day || null,
+        updated_at: db.fn.now()
       })
       .returning('*');
 
