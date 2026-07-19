@@ -8,6 +8,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { AuthProvider, useAuth } from './src/context/AuthContext'
 import { NotificationProvider } from './src/context/NotificationContext'
 import { RemindersProvider } from './src/context/RemindersContext'
+import { AppLockProvider } from './src/context/AppLockContext'
 import DialogProvider from './src/components/ConfirmDialog'
 import { clay, colors } from './src/theme'
 
@@ -27,6 +28,7 @@ import Projections from './src/screens/Projections'
 import PaymentsHistory from './src/screens/PaymentsHistory'
 import Budgets from './src/screens/Budgets'
 import Reminders from './src/screens/Reminders'
+import Security from './src/screens/Security'
 import AutoExpenseModal from './src/components/AutoExpenseModal'
 
 const Stack = createNativeStackNavigator()
@@ -53,6 +55,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
       <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reminders" component={Reminders} options={{ headerShown: false }} />
+      <MoreStack.Screen name="Security" component={Security} options={{ headerShown: false }} />
       <MoreStack.Screen name="PaymentsHistory" component={PaymentsHistory} options={{ headerShown: false }} />
     </MoreStack.Navigator>
   )
@@ -135,7 +138,9 @@ export default function App() {
       <AuthProvider>
         <StatusBar style="dark" />
         <DialogProvider>
-          <RootNavigator />
+          <AppLockProvider>
+            <RootNavigator />
+          </AppLockProvider>
         </DialogProvider>
       </AuthProvider>
     </SafeAreaProvider>

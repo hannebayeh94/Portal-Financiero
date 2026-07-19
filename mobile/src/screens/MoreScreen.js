@@ -14,6 +14,7 @@ const items = [
   { name: 'Calculator', label: 'Calculadora', icon: 'calculator', grad: gradients.calc, desc: 'Simula créditos y pagos' },
   { name: 'Projections', label: 'Proyecciones', icon: 'eye', grad: gradients.projection, desc: 'Escenarios financieros' },
   { name: 'Reminders', label: 'Recordatorios', icon: 'notifications', grad: gradients.income, desc: 'Avisos de vencimientos y recurrentes' },
+  { name: 'Security', label: 'Seguridad', icon: 'lock-closed', grad: gradients.report, desc: 'Bloqueo con PIN y biometría' },
 ]
 
 function Row({ icon, grad, label, desc, onPress, badge }) {
