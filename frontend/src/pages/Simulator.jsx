@@ -47,6 +47,7 @@ const DEFAULT_CONFIG = {
   horizonMonths: 12,
   baseIncome: 0,
   baseExpense: 0,
+  recurringIds: [],
   startingBalance: 0,
   includeDebts: true,
   debtThreshold: 0,
@@ -67,7 +68,6 @@ export default function Simulator() {
   const [currentId, setCurrentId] = useState(null)
 
   const [recurringExpenses, setRecurringExpenses] = useState([])
-  const [recurringSel, setRecurringSel] = useState(() => new Set())
 
   const debounceRef = useRef(null)
 
@@ -83,7 +83,6 @@ export default function Simulator() {
         ])
         const recItems = recRes.data?.items || []
         setRecurringExpenses(recItems)
-        setRecurringSel(new Set(recItems.map(i => i.id)))
         const recurringTotal = recItems.reduce((s, i) => s + (i.monthlyAmount || 0), 0)
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
@@ -100,9 +99,11 @@ export default function Simulator() {
         setConfig(prev => ({
           ...prev,
           baseIncome: avgIncome,
-          // Si hay egresos recurrentes, el gasto base parte de ellos (lo pedido);
-          // si no, cae al promedio real de gastos.
-          baseExpense: recItems.length ? recurringTotal : avgExpense,
+          // Dos componentes distintos que se suman: los egresos recurrentes (fijos,
+          // todos marcados por defecto) y los "otros gastos" no recurrentes. Para no
+          // doble-contar, los otros gastos parten del promedio real menos lo recurrente.
+          recurringIds: recItems.map(i => i.id),
+          baseExpense: recItems.length ? Math.max(0, avgExpense - recurringTotal) : avgExpense,
           debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0,
         }))
       } catch (error) {
@@ -125,13 +126,24 @@ export default function Simulator() {
     }
   }, [])
 
+  // Suma de los egresos recurrentes marcados (componente aparte del gasto base).
+  const recurringIds = config.recurringIds || []
+  const recurringSum = recurringExpenses
+    .filter(i => recurringIds.includes(i.id))
+    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+  // Gasto operativo total del mes = otros gastos (no recurrentes) + recurrentes marcados.
+  const expenseBaseTotal = (parseFloat(config.baseExpense) || 0) + recurringSum
+
   // Recalcula (con debounce) cada vez que cambia la configuración.
   useEffect(() => {
     if (loading) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => compute(config), 400)
+    // Se inyecta recurringExpense (suma de recurrentes marcados) al calcular; el
+    // motor lo suma a baseExpense. En la config guardada solo persisten recurringIds.
+    const payload = { ...config, recurringExpense: recurringSum }
+    debounceRef.current = setTimeout(() => compute(payload), 400)
     return () => debounceRef.current && clearTimeout(debounceRef.current)
-  }, [config, loading, compute])
+  }, [config, loading, compute, recurringSum])
 
   const setField = (field, value) => setConfig(prev => ({ ...prev, [field]: value }))
   const setAlloc = (key, value) =>
@@ -153,21 +165,13 @@ export default function Simulator() {
       return { ...prev, overrides }
     })
 
-  const recurringSum = recurringExpenses
-    .filter(i => recurringSel.has(i.id))
-    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-  // Al marcar/desmarcar, el gasto base se recalcula en vivo → las tablas se
-  // actualizan solas (no hace falta un botón aparte).
-  const toggleRecurring = (id) => {
-    const next = new Set(recurringSel)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    setRecurringSel(next)
-    const sum = recurringExpenses
-      .filter(i => next.has(i.id))
-      .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-    setField('baseExpense', sum)
-  }
+  const toggleRecurring = (id) =>
+    setConfig(prev => {
+      const ids = new Set(prev.recurringIds || [])
+      if (ids.has(id)) ids.delete(id)
+      else ids.add(id)
+      return { ...prev, recurringIds: Array.from(ids) }
+    })
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -351,7 +355,7 @@ export default function Simulator() {
             <Field label="Ingreso base mensual">
               <MoneyInput value={config.baseIncome} onChange={(v) => setField('baseIncome', v)} />
             </Field>
-            <Field label="Gasto base mensual (sin cuotas de deuda)">
+            <Field label="Otros gastos mensuales (no recurrentes)">
               <MoneyInput value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
             </Field>
             <Field label="Umbral de alerta de deuda">
@@ -372,19 +376,23 @@ export default function Simulator() {
             <div className="mt-4 pt-4" style={{ borderTop: '1px solid #e0d4c8' }}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>Gasto base desde egresos recurrentes</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>Egresos recurrentes (gastos fijos)</p>
                   <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
-                    Marca los gastos fijos que se repiten cada mes; el <strong>gasto base se actualiza solo</strong> con lo marcado (semanal y anual se normalizan a mensual).
+                    Marca los gastos fijos que se repiten cada mes. <strong>Se suman</strong> a los "otros gastos" para el gasto total del mes (semanal y anual se normalizan a mensual).
                   </p>
                 </div>
                 <div className="text-right whitespace-nowrap">
-                  <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>Gasto base</p>
+                  <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>Recurrentes</p>
                   <p className="text-base font-bold" style={{ color: 'var(--clay-red)' }}>{formatCurrency(recurringSum)}</p>
                 </div>
               </div>
+              <div className="mb-3 px-3 py-2 rounded-xl text-xs flex items-center justify-between" style={{ background: '#efe6da', color: 'var(--clay-text)' }}>
+                <span>Gasto total del mes = otros ({formatCurrency(config.baseExpense)}) + recurrentes ({formatCurrency(recurringSum)})</span>
+                <span className="font-bold">{formatCurrency(expenseBaseTotal)}</span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {recurringExpenses.map(it => {
-                  const checked = recurringSel.has(it.id)
+                  const checked = recurringIds.includes(it.id)
                   return (
                     <label key={it.id} className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ background: '#e8ddd0' }}>
                       <input type="checkbox" checked={checked} onChange={() => toggleRecurring(it.id)} className="h-4 w-4" style={{ accentColor: 'var(--clay-accent)' }} />
@@ -522,7 +530,7 @@ export default function Simulator() {
                   {months.map((m) => {
                     const ov = config.overrides[m.index] || {}
                     const incomeVal = ov.income ?? config.baseIncome
-                    const expenseVal = ov.expense ?? config.baseExpense
+                    const expenseVal = ov.expense ?? expenseBaseTotal
                     return (
                       <tr key={m.index} style={m.overridden ? { background: 'rgba(112, 160, 184, 0.10)' } : undefined}>
                         <td className="font-semibold text-xs whitespace-nowrap" style={{ color: 'var(--clay-text-muted)' }}>{m.label}</td>

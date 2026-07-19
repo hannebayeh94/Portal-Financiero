@@ -25,6 +25,7 @@ const DEFAULT_CONFIG = {
   horizonMonths: 12,
   baseIncome: 0,
   baseExpense: 0,
+  recurringIds: [],
   startingBalance: 0,
   includeDebts: true,
   debtThreshold: 0,
@@ -51,7 +52,6 @@ export default function Simulator({ navigation }) {
   const [currentId, setCurrentId] = useState(null)
 
   const [recurringExpenses, setRecurringExpenses] = useState([])
-  const [recurringSel, setRecurringSel] = useState(() => new Set())
 
   const debounceRef = useRef(null)
 
@@ -66,7 +66,6 @@ export default function Simulator({ navigation }) {
         ])
         const recItems = recRes.data?.items || []
         setRecurringExpenses(recItems)
-        setRecurringSel(new Set(recItems.map(i => i.id)))
         const recurringTotal = recItems.reduce((s, i) => s + (i.monthlyAmount || 0), 0)
         const rows = evoRes.data?.data || []
         const withIncome = rows.filter(r => r.income > 0)
@@ -75,7 +74,7 @@ export default function Simulator({ navigation }) {
         const avgExpense = withExpense.length ? Math.round(withExpense.reduce((s, r) => s + r.expenses, 0) / withExpense.length) : 0
         const activeDebts = (debtRes.data || []).filter(d => d.status === 'active')
         const totalDebt = activeDebts.reduce((s, d) => s + (parseFloat(d.current_balance) || 0), 0)
-        setConfig(prev => ({ ...prev, baseIncome: avgIncome, baseExpense: recItems.length ? recurringTotal : avgExpense, debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0 }))
+        setConfig(prev => ({ ...prev, baseIncome: avgIncome, recurringIds: recItems.map(i => i.id), baseExpense: recItems.length ? Math.max(0, avgExpense - recurringTotal) : avgExpense, debtThreshold: totalDebt ? Math.round(totalDebt * 1.5) : 0 }))
       } catch {}
       finally { setLoading(false) }
     })()
@@ -90,12 +89,21 @@ export default function Simulator({ navigation }) {
     finally { setComputing(false) }
   }, [])
 
+  // Egresos recurrentes marcados (componente aparte del gasto base).
+  const recurringIds = config.recurringIds || []
+  const recurringSum = recurringExpenses
+    .filter(i => recurringIds.includes(i.id))
+    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
+  // Gasto operativo total del mes = otros gastos (no recurrentes) + recurrentes marcados.
+  const expenseBaseTotal = (parseFloat(config.baseExpense) || 0) + recurringSum
+
   useEffect(() => {
     if (loading) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => compute(config), 500)
+    const payload = { ...config, recurringExpense: recurringSum }
+    debounceRef.current = setTimeout(() => compute(payload), 500)
     return () => debounceRef.current && clearTimeout(debounceRef.current)
-  }, [config, loading, compute])
+  }, [config, loading, compute, recurringSum])
 
   const setField = (field, value) => setConfig(prev => ({ ...prev, [field]: value }))
   const setAlloc = (key, value) => setConfig(prev => ({ ...prev, allocations: { ...prev.allocations, [key]: value } }))
@@ -116,20 +124,13 @@ export default function Simulator({ navigation }) {
       return { ...prev, overrides }
     })
 
-  const recurringSum = recurringExpenses
-    .filter(i => recurringSel.has(i.id))
-    .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-  // Al marcar/desmarcar se recalcula el gasto base en vivo → las tablas se actualizan solas.
-  const toggleRecurring = (id) => {
-    const next = new Set(recurringSel)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    setRecurringSel(next)
-    const sum = recurringExpenses
-      .filter(i => next.has(i.id))
-      .reduce((s, i) => s + (i.monthlyAmount || 0), 0)
-    setField('baseExpense', sum)
-  }
+  const toggleRecurring = (id) =>
+    setConfig(prev => {
+      const ids = new Set(prev.recurringIds || [])
+      if (ids.has(id)) ids.delete(id)
+      else ids.add(id)
+      return { ...prev, recurringIds: Array.from(ids) }
+    })
 
   const months = result?.months || []
   const alerts = result?.alerts || []
@@ -197,7 +198,7 @@ export default function Simulator({ navigation }) {
               </View>
               <NumRow label="Mes inicial (AAAA-MM)" value={config.startMonth} onChange={(t) => setField('startMonth', t)} raw />
               <NumRow label="Ingreso base mensual" value={config.baseIncome} onChange={(v) => setField('baseIncome', v)} />
-              <NumRow label="Gasto base mensual (sin cuotas de deuda)" value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
+              <NumRow label="Otros gastos mensuales (no recurrentes)" value={config.baseExpense} onChange={(v) => setField('baseExpense', v)} />
               <NumRow label="Saldo inicial" value={config.startingBalance} onChange={(v) => setField('startingBalance', v)} />
               <NumRow label="Umbral de alerta de deuda" value={config.debtThreshold} onChange={(v) => setField('debtThreshold', v)} />
               <TouchableOpacity onPress={() => setField('includeDebts', !config.includeDebts)} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
@@ -211,16 +212,20 @@ export default function Simulator({ navigation }) {
                 <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: clay.border }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>Gasto base desde egresos recurrentes</Text>
-                      <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>Marca tus gastos fijos; el gasto base se actualiza solo (semanal/anual se normalizan a mensual).</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>Egresos recurrentes (gastos fijos)</Text>
+                      <Text style={{ fontSize: 11, color: clay.textMuted, marginTop: 1 }}>Marca tus gastos fijos; se SUMAN a los "otros gastos" (semanal/anual se normalizan a mensual).</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Gasto base</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: clay.textMuted, textTransform: 'uppercase' }}>Recurrentes</Text>
                       <Text style={{ fontSize: 15, fontWeight: '800', color: colors.danger[400] }}>{formatCurrency(recurringSum)}</Text>
                     </View>
                   </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: clay.inset, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 8 }}>
+                    <Text style={{ fontSize: 11, color: clay.textMuted, flex: 1 }}>Gasto total = otros ({formatCurrency(config.baseExpense)}) + recurrentes</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: clay.text }}>{formatCurrency(expenseBaseTotal)}</Text>
+                  </View>
                   {recurringExpenses.map(it => {
-                    const checked = recurringSel.has(it.id)
+                    const checked = recurringIds.includes(it.id)
                     return (
                       <TouchableOpacity key={it.id} activeOpacity={0.7} onPress={() => toggleRecurring(it.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}>
                         <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: checked ? colors.primary[500] : clay.border, backgroundColor: checked ? colors.primary[500] : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -324,7 +329,7 @@ export default function Simulator({ navigation }) {
               {months.map((m) => {
                 const ov = config.overrides[m.index] || {}
                 const incomeVal = ov.income ?? config.baseIncome
-                const expenseVal = ov.expense ?? config.baseExpense
+                const expenseVal = ov.expense ?? expenseBaseTotal
                 return (
                   <View key={m.index} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <Text style={{ width: 60, fontSize: 12, fontWeight: '700', color: m.overridden ? colors.primary[500] : clay.textMuted }}>{m.label}</Text>

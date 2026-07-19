@@ -28,6 +28,7 @@ function computeSimulation(config = {}, debts = []) {
     horizonMonths = 12,
     baseIncome = 0,
     baseExpense = 0,
+    recurringExpense = 0,
     startingBalance = 0,
     includeDebts = true,
     debtThreshold = null,
@@ -86,6 +87,11 @@ function computeSimulation(config = {}, debts = []) {
     if (v === null || v === undefined || v === '') return parseFloat(base) || 0;
     return parseFloat(v) || 0;
   };
+
+  // El gasto base mensual es la suma de dos componentes distintos: los gastos
+  // NO recurrentes (baseExpense) + los egresos recurrentes fijos seleccionados
+  // (recurringExpense). La cuota de deuda va aparte y no se incluye aquí.
+  const baseExpenseTotal = (parseFloat(baseExpense) || 0) + (parseFloat(recurringExpense) || 0);
 
   // --- Amortización por CICLO DE CORTE ---------------------------------------
   // Para cada deuda se construye su calendario de ciclos a lo largo del horizonte.
@@ -168,7 +174,7 @@ function computeSimulation(config = {}, debts = []) {
   for (let m = 0; m < horizon; m++) {
     const ov = overrides[m] || overrides[String(m)] || {};
     const income = round(pickValue(ov, 'income', baseIncome));
-    const expense = round(pickValue(ov, 'expense', baseExpense));
+    const expense = round(pickValue(ov, 'expense', baseExpenseTotal));
 
     // Cuotas de deuda del mes (precalculadas por ciclo de corte, asignadas al mes
     // calendario del vencimiento de cada ciclo).
