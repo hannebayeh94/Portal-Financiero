@@ -51,14 +51,20 @@ portal-financiero/
 
 `backend/src/server.js` mounts routes under `/api`:
 ```
-/auth   → POST   /login, /register
-/incomes→ GET, POST, PUT, DELETE  (user_id from JWT)
-/expenses→ GET, POST, PUT, DELETE (supports four_per_thousand flag + auto-calc amount * 0.004)
-/debts  → GET, POST, PUT, DELETE
-/savings→ GET, POST, PUT, DELETE
-/reports→ GET   /cash-flow, /monthly-evolution, /expenses-by-category
-/projections → GET
+/auth       → POST   /login, /register
+/categories → GET, POST, PUT, DELETE  (default categories seeded per user)
+/budgets    → GET, POST, PUT, DELETE
+/incomes    → GET, POST, PUT, DELETE  (user_id from JWT)
+/expenses   → GET, POST, PUT, DELETE  (supports four_per_thousand flag + auto-calc amount * 0.004)
+/debts      → GET, POST, PUT, DELETE  (payment_day, cut_day for billing cycles)
+/savings    → GET, POST, PUT, DELETE
+/projections→ GET
+/simulations→ simulador engine (computeSimulation over real debts)
+/reports    → GET   /cash-flow, /monthly-evolution, /expenses-by-category
+/health     → GET   (liveness check)
 ```
+
+Backend domain logic in `backend/src/utils/`: `simulationEngine.js` (pure `computeSimulation(config, debts)`), `billingCycles.js` (`buildCycles` — cut-day/billing math), `defaultCategories.js`.
 
 JWT token stored in `localStorage.getItem('token')` (frontend) or `AsyncStorage.getItem('token')` (mobile). 401 interceptor clears token and redirects to `/login`.
 
