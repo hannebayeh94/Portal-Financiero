@@ -56,13 +56,29 @@ function computeProjection(debt) {
 
   if (!balance || !payment) return null
 
+  const scheduledMonths = new Set([
+    ...(debt.balanceIncrements || []).map(bi => bi.month),
+    ...(debt.extraPayments || []).map(ep => ep.month),
+  ])
+  const maxScheduledMonth = scheduledMonths.size ? Math.max(...scheduledMonths) : 0
+
   const rows = []
   let currentBalance = balance
   let month = 1
   const startDate = new Date()
   startDate.setDate(1)
 
-  while (currentBalance > 0.01 && month <= 600) {
+  while (month <= 600) {
+    const isPaid = currentBalance <= 0.01
+    if (isPaid && month > maxScheduledMonth) break
+
+    if (isPaid && !scheduledMonths.has(month)) {
+      const nextScheduled = [...scheduledMonths].filter(m => m > month).sort((a, b) => a - b)[0]
+      if (nextScheduled == null) break
+      month = nextScheduled
+      continue
+    }
+
     const extraPaymentsThisMonth = debt.extraPayments
       .filter(ep => ep.month === month)
       .reduce((sum, ep) => sum + (parseFloat(ep.amount) || 0), 0)
