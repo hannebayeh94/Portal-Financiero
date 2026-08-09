@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { categoryBelongsToUser, isPositiveNumber } = require('../utils/validation');
 
 router.use(authenticateToken);
 
@@ -10,7 +11,10 @@ router.get('/', async (req, res) => {
     const { month, year, category_id, type } = req.query;
     let query = db('expenses')
       .select('expenses.*', 'categories.name as category_name')
-      .leftJoin('categories', 'expenses.category_id', 'categories.id')
+      .leftJoin('categories', function () {
+        this.on('expenses.category_id', '=', 'categories.id')
+          .andOn('categories.user_id', '=', req.user.id);
+      })
       .where('expenses.user_id', req.user.id)
       .orderBy('expenses.date', 'desc');
 
@@ -71,7 +75,10 @@ router.get('/by-category', async (req, res) => {
 
     const expenses = await db('expenses')
       .select('categories.name as category', db.raw('SUM(expenses.amount) as total'))
-      .leftJoin('categories', 'expenses.category_id', 'categories.id')
+      .leftJoin('categories', function () {
+        this.on('expenses.category_id', '=', 'categories.id')
+          .andOn('categories.user_id', '=', req.user.id);
+      })
       .where('expenses.user_id', req.user.id)
       .whereRaw('EXTRACT(MONTH FROM expenses.date) = ? AND EXTRACT(YEAR FROM expenses.date) = ?', [targetMonth, targetYear])
       .groupBy('categories.name');
@@ -90,7 +97,10 @@ router.get('/recurring', async (req, res) => {
   try {
     const rows = await db('expenses')
       .select('expenses.*', 'categories.name as category_name')
-      .leftJoin('categories', 'expenses.category_id', 'categories.id')
+      .leftJoin('categories', function () {
+        this.on('expenses.category_id', '=', 'categories.id')
+          .andOn('categories.user_id', '=', req.user.id);
+      })
       .where('expenses.user_id', req.user.id)
       .where('expenses.recurring', true)
       .orderBy('expenses.date', 'desc');
@@ -128,13 +138,21 @@ router.post('/', async (req, res) => {
   try {
     const { amount, description, date, category_id, type, recurring, recurrence_type, apply_four_per_thousand } = req.body;
 
+    const amountNum = parseFloat(amount);
+    if (!isPositiveNumber(amountNum)) {
+      return res.status(400).json({ error: 'El monto del egreso debe ser mayor a cero' });
+    }
+    if (!(await categoryBelongsToUser(db, req.user.id, category_id))) {
+      return res.status(400).json({ error: 'La categoría seleccionada no existe' });
+    }
+
     const four_per_thousand_amount = apply_four_per_thousand
-      ? Math.round(parseFloat(amount) * 0.004 * 100) / 100
+      ? Math.round(amountNum * 0.004 * 100) / 100
       : null;
 
     const [expense] = await db('expenses')
       .insert({
-        amount, description, date, category_id, type,
+        amount: amountNum, description, date, category_id, type,
         recurring, recurrence_type,
         apply_four_per_thousand: apply_four_per_thousand || false,
         four_per_thousand_amount,
@@ -153,14 +171,22 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { amount, description, date, category_id, type, recurring, recurrence_type, apply_four_per_thousand } = req.body;
 
+    const amountNum = parseFloat(amount);
+    if (!isPositiveNumber(amountNum)) {
+      return res.status(400).json({ error: 'El monto del egreso debe ser mayor a cero' });
+    }
+    if (!(await categoryBelongsToUser(db, req.user.id, category_id))) {
+      return res.status(400).json({ error: 'La categoría seleccionada no existe' });
+    }
+
     const four_per_thousand_amount = apply_four_per_thousand
-      ? Math.round(parseFloat(amount) * 0.004 * 100) / 100
+      ? Math.round(amountNum * 0.004 * 100) / 100
       : null;
 
     const [expense] = await db('expenses')
       .where({ id, user_id: req.user.id })
       .update({
-        amount, description, date, category_id, type,
+        amount: amountNum, description, date, category_id, type,
         recurring, recurrence_type,
         apply_four_per_thousand: apply_four_per_thousand || false,
         four_per_thousand_amount,

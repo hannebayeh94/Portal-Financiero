@@ -315,7 +315,7 @@ export default function Incomes() {
                   ))}
                 </select>
               </div>
-              <div className="flex items-center p-4 bg-[#e8ddd0] rounded-xl shadow-clay-inset">
+              <div className="flex items-center p-4 bg-dark-100 rounded-xl shadow-clay-inset">
                 <ClayToggle
                   id="recurring"
                   checked={formData.recurring}

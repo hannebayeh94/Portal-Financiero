@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { categoryBelongsToUser } = require('../utils/validation');
 
 router.use(authenticateToken);
 
@@ -10,7 +11,10 @@ router.get('/', async (req, res) => {
     const { month, year, category_id } = req.query;
     let query = db('incomes')
       .select('incomes.*', 'categories.name as category_name')
-      .leftJoin('categories', 'incomes.category_id', 'categories.id')
+      .leftJoin('categories', function () {
+        this.on('incomes.category_id', '=', 'categories.id')
+          .andOn('categories.user_id', '=', req.user.id);
+      })
       .where('incomes.user_id', req.user.id)
       .orderBy('incomes.date', 'desc');
 
@@ -51,6 +55,10 @@ router.post('/', async (req, res) => {
   try {
     const { amount, description, date, category_id, source, recurring, recurrence_type } = req.body;
 
+    if (!(await categoryBelongsToUser(db, req.user.id, category_id))) {
+      return res.status(400).json({ error: 'La categoría seleccionada no existe' });
+    }
+
     const [income] = await db('incomes')
       .insert({
         amount, description, date, category_id, source,
@@ -68,6 +76,10 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { amount, description, date, category_id, source, recurring, recurrence_type } = req.body;
+
+    if (!(await categoryBelongsToUser(db, req.user.id, category_id))) {
+      return res.status(400).json({ error: 'La categoría seleccionada no existe' });
+    }
 
     const [income] = await db('incomes')
       .where({ id, user_id: req.user.id })

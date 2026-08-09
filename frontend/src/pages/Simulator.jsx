@@ -32,9 +32,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 const HORIZON_OPTIONS = [6, 12, 24, 36]
 const ALLOC_ROWS = [
-  { key: 'savings', label: 'Ahorro', color: '#7dab7d' },
-  { key: 'investment', label: 'Inversión', color: '#70a0b8' },
-  { key: 'emergency', label: 'Emergencias', color: '#d4a574' },
+  { key: 'savings', label: 'Ahorro', color: '#4cc38a' },
+  { key: 'investment', label: 'Inversión', color: '#6fa8dc' },
+  { key: 'emergency', label: 'Emergencias', color: '#e2b153' },
 ]
 
 function currentMonthStr() {
@@ -240,8 +240,8 @@ export default function Simulator() {
       {
         label: 'Saldo acumulado',
         data: months.map(m => m.accumulated),
-        borderColor: '#2d3436',
-        backgroundColor: 'rgba(45, 52, 54, 0.08)',
+        borderColor: '#eceee6',
+        backgroundColor: 'rgba(236, 238, 230, 0.08)',
         fill: true,
         tension: 0.3,
         pointRadius: 2,
@@ -251,8 +251,8 @@ export default function Simulator() {
       {
         label: 'Saldo disponible del mes',
         data: months.map(m => m.available),
-        borderColor: '#d4a574',
-        backgroundColor: 'rgba(212, 165, 116, 0.12)',
+        borderColor: '#e2b153',
+        backgroundColor: 'rgba(226, 177, 83, 0.12)',
         fill: false,
         tension: 0.3,
         pointRadius: 2,
@@ -264,9 +264,9 @@ export default function Simulator() {
   const barData = {
     labels: months.map(m => m.label),
     datasets: [
-      { label: 'Ingresos', data: months.map(m => m.income), backgroundColor: '#7dab7d' },
-      { label: 'Gastos', data: months.map(m => m.expense), backgroundColor: '#c47a7a' },
-      { label: 'Cuota deudas', data: months.map(m => m.debtPayment), backgroundColor: '#a08090' },
+      { label: 'Ingresos', data: months.map(m => m.income), backgroundColor: '#4cc38a' },
+      { label: 'Gastos', data: months.map(m => m.expense), backgroundColor: '#e4635c' },
+      { label: 'Cuota deudas', data: months.map(m => m.debtPayment), backgroundColor: '#b48cf0' },
     ],
   }
 
@@ -277,20 +277,20 @@ export default function Simulator() {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: '#8a7a6a', font: { size: 11, family: 'Inter' }, padding: 14, usePointStyle: true, pointStyle: 'circle' },
+        labels: { color: '#8b95a8', font: { size: 11, family: '"IBM Plex Mono", monospace' }, padding: 14, usePointStyle: true, pointStyle: 'circle' },
       },
       tooltip: {
-        backgroundColor: '#f5ebe0', titleColor: '#2d3436', bodyColor: '#2d3436',
-        borderColor: '#d4c4b4', borderWidth: 1, padding: 12, cornerRadius: 12,
+        backgroundColor: '#1b2130', titleColor: '#eceee6', bodyColor: '#a6b0c2',
+        borderColor: '#2c3650', borderWidth: 1, padding: 12, cornerRadius: 10,
         callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}` },
       },
     },
     scales: {
-      x: { stacked, grid: { display: false }, ticks: { color: '#8a7a6a', font: { size: 10, family: 'Inter' }, maxRotation: 45, maxTicksLimit: 12 } },
+      x: { stacked, grid: { display: false }, ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 } },
       y: {
         stacked,
-        grid: { color: 'rgba(212, 196, 180, 0.3)' },
-        ticks: { color: '#8a7a6a', font: { size: 11, family: 'Inter' }, callback: (v) => '$' + v.toLocaleString('es-CO') },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        ticks: { color: '#8b95a8', font: { size: 11, family: '"IBM Plex Mono", monospace' }, callback: (v) => '$' + v.toLocaleString('es-CO') },
       },
     },
   })
@@ -298,7 +298,7 @@ export default function Simulator() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '4px solid #e0d4c8', borderTopColor: 'var(--clay-accent)' }}></div>
+        <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '4px solid #2c3650', borderTopColor: 'var(--clay-accent)' }}></div>
       </div>
     )
   }
@@ -332,7 +332,7 @@ export default function Simulator() {
         {/* Configuración base */}
         <div className="clay-card p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e2b153, #b3872f)', boxShadow: 'var(--clay-shadow-sm)' }}>
               <Cog6ToothIcon className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -373,7 +373,7 @@ export default function Simulator() {
           </div>
 
           {recurringExpenses.length > 0 && (
-            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #e0d4c8' }}>
+            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #2c3650' }}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>Egresos recurrentes (gastos fijos)</p>
@@ -386,7 +386,7 @@ export default function Simulator() {
                   <p className="text-base font-bold" style={{ color: 'var(--clay-red)' }}>{formatCurrency(recurringSum)}</p>
                 </div>
               </div>
-              <div className="mb-3 px-3 py-2 rounded-xl text-xs flex items-center justify-between" style={{ background: '#efe6da', color: 'var(--clay-text)' }}>
+              <div className="mb-3 px-3 py-2 rounded-xl text-xs flex items-center justify-between" style={{ background: '#1b2130', color: 'var(--clay-text)' }}>
                 <span>Gasto total del mes = otros ({formatCurrency(config.baseExpense)}) + recurrentes ({formatCurrency(recurringSum)})</span>
                 <span className="font-bold">{formatCurrency(expenseBaseTotal)}</span>
               </div>
@@ -394,7 +394,7 @@ export default function Simulator() {
                 {recurringExpenses.map(it => {
                   const checked = recurringIds.includes(it.id)
                   return (
-                    <label key={it.id} className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ background: '#e8ddd0' }}>
+                    <label key={it.id} className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ background: '#1b2130' }}>
                       <input type="checkbox" checked={checked} onChange={() => toggleRecurring(it.id)} className="h-4 w-4" style={{ accentColor: 'var(--clay-accent)' }} />
                       <span className="flex-1 min-w-0">
                         <span className="text-sm font-medium truncate block" style={{ color: 'var(--clay-text)' }}>{it.description}</span>
@@ -414,7 +414,7 @@ export default function Simulator() {
         <div className="clay-card p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #7dab7d, #6d9b6d)', boxShadow: 'var(--clay-shadow-sm)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #3da966, #2c7444)', boxShadow: 'var(--clay-shadow-sm)' }}>
                 <ScaleIcon className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -429,7 +429,7 @@ export default function Simulator() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {ALLOC_ROWS.map(row => (
-              <div key={row.key} className="px-4 py-3 rounded-xl" style={{ background: '#e8ddd0' }}>
+              <div key={row.key} className="px-4 py-3 rounded-xl" style={{ background: '#1b2130' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-3 h-3 rounded-full" style={{ background: row.color }} />
                   <span className="text-sm font-semibold" style={{ color: 'var(--clay-text)' }}>{row.label}</span>
@@ -459,7 +459,7 @@ export default function Simulator() {
             </div>
             <ul className="space-y-2">
               {alerts.map((a, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm px-3 py-2 rounded-lg" style={{ background: a.type === 'debt' ? 'rgba(160, 128, 144, 0.15)' : 'rgba(196, 122, 122, 0.15)', color: 'var(--clay-text)' }}>
+                <li key={i} className="flex items-start gap-2 text-sm px-3 py-2 rounded-lg" style={{ background: a.type === 'debt' ? 'rgba(180, 140, 240, 0.1)' : 'rgba(228, 99, 92, 0.1)', color: 'var(--clay-text)' }}>
                   {a.type === 'debt' ? <BanknotesIcon className="h-4 w-4 mt-0.5 flex-shrink-0" /> : <ArrowTrendingDownIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />}
                   <span>{a.message}</span>
                 </li>
@@ -495,7 +495,7 @@ export default function Simulator() {
           <div className="clay-card overflow-hidden">
             <div className="p-5 flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #70a0b8, #6090a8)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #6fa8dc, #4a7ba8)', boxShadow: 'var(--clay-shadow-sm)' }}>
                   <CalendarDaysIcon className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -566,7 +566,7 @@ export default function Simulator() {
         {config.includeDebts && debtCycles.some(d => d.cycles.length > 0) && (
           <div className="clay-card p-6 space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #a08090, #906c80)', boxShadow: 'var(--clay-shadow-sm)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #b48cf0, #8b6cd1)', boxShadow: 'var(--clay-shadow-sm)' }}>
                 <BanknotesIcon className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -632,7 +632,7 @@ export default function Simulator() {
       {showSaveModal && (
         <div className="modal-overlay" onClick={() => setShowSaveModal(false)}>
           <div className="modal-content animate-scale-in max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Guardar simulación</h3>
             </div>
             <div className="p-5 space-y-4">
@@ -653,7 +653,7 @@ export default function Simulator() {
       {showLoadModal && (
         <div className="modal-overlay" onClick={() => setShowLoadModal(false)}>
           <div className="modal-content animate-scale-in max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Mis simulaciones</h3>
             </div>
             <div className="p-5 max-h-96 overflow-y-auto">
@@ -662,7 +662,7 @@ export default function Simulator() {
               ) : (
                 <div className="space-y-2">
                   {savedList.map(sim => (
-                    <div key={sim.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--clay-card)', border: '1px solid rgba(255,255,255,0.5)' }}>
+                    <div key={sim.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--clay-card)', border: '1px solid var(--line)' }}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate" style={{ color: 'var(--clay-text)' }}>{sim.name}</p>
                         <p className="text-xs mt-0.5" style={{ color: 'var(--clay-text-muted)' }}>{new Date(sim.updated_at).toLocaleDateString('es-CO')}</p>
@@ -676,7 +676,7 @@ export default function Simulator() {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#2c3650' }}>
               <button onClick={() => setShowLoadModal(false)} className="clay-btn px-4 py-2 text-sm">Cerrar</button>
             </div>
           </div>

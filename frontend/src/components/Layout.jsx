@@ -19,24 +19,122 @@ import {
   BeakerIcon,
 } from '@heroicons/react/24/outline'
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Ingresos', href: '/incomes', icon: ArrowTrendingUpIcon },
-  { name: 'Egresos', href: '/expenses', icon: ArrowTrendingDownIcon },
-  { name: 'Categorías', href: '/categories', icon: TagIcon },
-  { name: 'Presupuestos', href: '/budgets', icon: ChartPieIcon },
-  { name: 'Deudas', href: '/debts', icon: BanknotesIcon },
-  { name: 'Ahorros', href: '/savings', icon: WalletIcon },
-  { name: 'Calculadora', href: '/calculator', icon: CalculatorIcon },
-  { name: 'Pago Deudas', href: '/debt-payoff', icon: CreditCardIcon },
-  { name: 'Proyecciones', href: '/projections', icon: ChartBarIcon },
-  { name: 'Simulador', href: '/simulator', icon: BeakerIcon },
-  { name: 'Reportes', href: '/reports', icon: DocumentChartBarIcon },
+const navGroups = [
+  {
+    label: 'Vista general',
+    items: [{ name: 'Dashboard', href: '/', icon: HomeIcon }],
+  },
+  {
+    label: 'Gestión',
+    items: [
+      { name: 'Ingresos', href: '/incomes', icon: ArrowTrendingUpIcon },
+      { name: 'Egresos', href: '/expenses', icon: ArrowTrendingDownIcon },
+      { name: 'Categorías', href: '/categories', icon: TagIcon },
+      { name: 'Presupuestos', href: '/budgets', icon: ChartPieIcon },
+      { name: 'Deudas', href: '/debts', icon: BanknotesIcon },
+      { name: 'Ahorros', href: '/savings', icon: WalletIcon },
+    ],
+  },
+  {
+    label: 'Análisis',
+    items: [
+      { name: 'Calculadora', href: '/calculator', icon: CalculatorIcon },
+      { name: 'Pago Deudas', href: '/debt-payoff', icon: CreditCardIcon },
+      { name: 'Proyecciones', href: '/projections', icon: ChartBarIcon },
+      { name: 'Simulador', href: '/simulator', icon: BeakerIcon },
+      { name: 'Reportes', href: '/reports', icon: DocumentChartBarIcon },
+    ],
+  },
 ]
+
+function BrandMark({ small = false }) {
+  return (
+    <div
+      className={`${small ? 'w-9 h-9' : 'w-11 h-11'} rounded-full flex items-center justify-center flex-shrink-0 border shadow-[0_0_0_4px_rgba(226,177,83,0.12),0_0_0_6px_rgba(226,177,83,0.06)]`}
+      style={{
+        background: 'radial-gradient(circle at 35% 30%, #f0cb7e, #d9a440 70%)',
+        borderColor: '#b3872f',
+      }}
+    >
+      <span
+        className={`${small ? 'text-sm' : 'text-base'} text-[#1a1407] leading-none font-bold`}
+        style={{ fontFamily: 'Fraunces, serif' }}
+      >
+        PF
+      </span>
+    </div>
+  )
+}
+
+function SidebarContent({ user, onLogout, onNavigate }) {
+  const location = useLocation()
+  return (
+    <>
+      <div
+        className="flex items-center h-20 px-6 gap-3 border-b border-dark-200"
+        style={{ background: 'linear-gradient(180deg, rgba(226,177,83,0.06), transparent)' }}
+      >
+        <BrandMark />
+        <div className="leading-tight">
+          <span className="block text-[17px] font-semibold text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>
+            Portal Financiero
+          </span>
+          <span className="block text-[10px] tracking-[0.22em] uppercase text-dark-500" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+            Bóveda personal
+          </span>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-5">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-dark-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              {group.label}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive = location.pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={onNavigate}
+                    className={`sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-3 border-t border-dark-200" style={{ background: 'var(--ink-900)' }}>
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-dark-100 border border-dark-200">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border border-dark-300 text-[15px] font-semibold" style={{ background: 'var(--ink-800)', color: 'var(--gold-bright)', fontFamily: 'Fraunces, serif' }}>
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate text-dark-800">{user?.name}</p>
+            <p className="text-[11px] truncate text-dark-500" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>{user?.email}</p>
+          </div>
+          <button
+            onClick={onLogout}
+            title="Cerrar sesión"
+            className="p-2 rounded-lg text-dark-400 hover:text-danger-500 hover:bg-danger-50 transition-all"
+          >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
@@ -49,142 +147,38 @@ export default function Layout() {
     <div className="min-h-screen" style={{ background: 'var(--bg-gradient)' }}>
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0" style={{ background: 'rgba(45, 52, 54, 0.6)' }} onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0" style={{ background: 'rgba(5, 7, 11, 0.72)', backdropFilter: 'blur(4px)' }} onClick={() => setSidebarOpen(false)} />
         <div
           className="fixed inset-y-0 left-0 flex flex-col w-72"
-          style={{
-            background: 'var(--clay-card)',
-            boxShadow: 'var(--clay-shadow)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.6)',
-          }}
+          style={{ background: 'var(--ink-900)', borderRight: '1px solid var(--line)', boxShadow: '24px 0 60px -24px rgba(0,0,0,0.7)' }}
         >
-          <div className="flex items-center justify-between h-20 px-6" style={{ borderBottom: '2px solid #d4c4b4' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                <span className="text-white font-bold text-lg">PF</span>
-              </div>
-              <span className="text-xl font-display font-bold" style={{ color: 'var(--clay-text)' }}>Portal Financiero</span>
-            </div>
-            <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl transition-all" style={{ color: 'var(--clay-text-muted)' }}>
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
-          <div className="p-4" style={{ borderTop: '2px solid #d4c4b4' }}>
-            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#e8ddd0', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                <span className="text-white font-semibold text-sm">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: 'var(--clay-text)' }}>{user?.name}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--clay-text-muted)' }}>{user?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl transition-all"
-                style={{ color: 'var(--clay-text-muted)' }}
-              >
-                <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+          <SidebarContent user={user} onLogout={handleLogout} onNavigate={() => setSidebarOpen(false)} />
+          <button onClick={() => setSidebarOpen(false)} className="absolute top-6 right-3 p-2 rounded-lg text-dark-400 hover:text-dark-200">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0">
-        <div
-          className="flex flex-col flex-grow"
-          style={{
-            background: 'var(--clay-card)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.6)',
-            boxShadow: '4px 0 16px rgba(0,0,0,0.05)',
-          }}
-        >
-          <div className="flex items-center h-20 px-6" style={{ borderBottom: '2px solid #d4c4b4' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                <span className="text-white font-bold text-lg">PF</span>
-              </div>
-              <span className="text-xl font-display font-bold" style={{ color: 'var(--clay-text)' }}>Portal Financiero</span>
-            </div>
-          </div>
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
-          <div className="p-4" style={{ borderTop: '2px solid #d4c4b4' }}>
-            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#e8ddd0', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                <span className="text-white font-semibold text-sm">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: 'var(--clay-text)' }}>{user?.name}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--clay-text-muted)' }}>{user?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl transition-all"
-                style={{ color: 'var(--clay-text-muted)' }}
-              >
-                <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0" style={{ background: 'var(--ink-900)', borderRight: '1px solid var(--line)', boxShadow: '12px 0 40px -28px rgba(0,0,0,0.8)' }}>
+        <SidebarContent user={user} onLogout={handleLogout} onNavigate={() => {}} />
       </div>
 
       {/* Main content */}
       <div className="lg:pl-72">
-        <div
+        <header
           className="sticky top-0 z-40 flex items-center h-20 px-6 lg:hidden"
-          style={{
-            background: 'var(--clay-card)',
-            borderBottom: '2px solid #d4c4b4',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}
+          style={{ background: 'rgba(17, 21, 30, 0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--line)' }}
         >
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl transition-all" style={{ color: 'var(--clay-text-muted)' }}>
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg text-dark-400 hover:text-dark-200">
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <div className="flex items-center gap-2 ml-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-              <span className="text-white font-bold text-sm">PF</span>
-            </div>
-            <span className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Portal Financiero</span>
+          <div className="flex items-center gap-3 ml-2">
+            <BrandMark small />
+            <span className="text-lg font-semibold text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>Portal Financiero</span>
           </div>
-        </div>
-        <main className="p-6 lg:p-8 animate-fade-in">
+        </header>
+        <main className="p-6 lg:p-10 animate-fade-in max-w-[1400px] mx-auto">
           <Outlet />
         </main>
       </div>

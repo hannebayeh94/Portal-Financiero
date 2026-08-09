@@ -158,7 +158,7 @@ export default function Reports() {
           <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            className="px-3 py-2 border border-gray-300 rounded-md bg-dark-900 text-dark-800 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
           >
             <option value={getCurrentYear() - 1}>{getCurrentYear() - 1}</option>
             <option value={getCurrentYear()}>{getCurrentYear()}</option>
@@ -167,7 +167,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-300">
         <nav className="flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -233,8 +233,8 @@ export default function Reports() {
             </div>
           </div>
           <div className="card overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-dark-100">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Nombre
@@ -256,7 +256,7 @@ export default function Reports() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-dark-50 divide-y divide-gray-300">
                 {debtStatus.debts.map((debt) => (
                   <tr key={debt.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -312,7 +312,7 @@ export default function Reports() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Detalle por Cuenta</h3>
               <div className="space-y-4">
                 {savingsStatus.accounts.map((account) => (
-                  <div key={account.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div key={account.id} className="p-4 bg-dark-100 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">{account.name}</span>
                       <span className="text-sm text-gray-500">{account.bank}</span>
@@ -340,12 +340,12 @@ export default function Reports() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Proyección de Intereses en Deudas</h3>
               <div className="space-y-6">
                 {interestProjection.debts.map((debt) => (
-                  <div key={debt.debt_id} className="border rounded-lg p-4">
+                  <div key={debt.debt_id} className="border border-gray-300 rounded-lg p-4">
                     <h4 className="font-medium text-gray-900 mb-3">{debt.debt_name}</h4>
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50">
+                          <tr className="bg-dark-100">
                             <th className="px-3 py-2 text-left">Mes</th>
                             <th className="px-3 py-2 text-left">Capital</th>
                             <th className="px-3 py-2 text-left">Interés</th>
@@ -354,7 +354,7 @@ export default function Reports() {
                         </thead>
                         <tbody>
                           {debt.projections.slice(0, 6).map((p) => (
-                            <tr key={p.month} className="border-t">
+                            <tr key={p.month} className="border-t border-gray-300">
                               <td className="px-3 py-2">{p.month}</td>
                               <td className="px-3 py-2 text-green-600">{formatCurrency(p.capital)}</td>
                               <td className="px-3 py-2 text-red-600">{formatCurrency(p.interest)}</td>
@@ -375,12 +375,12 @@ export default function Reports() {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Proyección de Intereses en Ahorros</h3>
               <div className="space-y-6">
                 {interestProjection.savings.map((savings) => (
-                  <div key={savings.savings_id} className="border rounded-lg p-4">
+                  <div key={savings.savings_id} className="border border-gray-300 rounded-lg p-4">
                     <h4 className="font-medium text-gray-900 mb-3">{savings.savings_name}</h4>
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50">
+                          <tr className="bg-dark-100">
                             <th className="px-3 py-2 text-left">Mes</th>
                             <th className="px-3 py-2 text-left">Intereses Generados</th>
                             <th className="px-3 py-2 text-left">Saldo</th>
@@ -388,7 +388,7 @@ export default function Reports() {
                         </thead>
                         <tbody>
                           {savings.projections.slice(0, 6).map((p) => (
-                            <tr key={p.month} className="border-t">
+                            <tr key={p.month} className="border-t border-gray-300">
                               <td className="px-3 py-2">{p.month}</td>
                               <td className="px-3 py-2 text-green-600">{formatCurrency(p.interest)}</td>
                               <td className="px-3 py-2">{formatCurrency(p.balance)}</td>

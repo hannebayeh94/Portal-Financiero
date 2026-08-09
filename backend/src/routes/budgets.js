@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { categoryBelongsToUser } = require('../utils/validation');
 
 router.use(authenticateToken);
 
@@ -14,7 +15,10 @@ router.get('/', async (req, res) => {
 
     const budgets = await db('budgets')
       .select('budgets.*', 'categories.name as category_name', 'categories.color as category_color')
-      .leftJoin('categories', 'budgets.category_id', 'categories.id')
+      .leftJoin('categories', function () {
+        this.on('budgets.category_id', '=', 'categories.id')
+          .andOn('categories.user_id', '=', req.user.id);
+      })
       .where('budgets.user_id', req.user.id)
       .where('budgets.month', month)
       .where('budgets.year', year)
@@ -50,6 +54,9 @@ router.post('/', async (req, res) => {
     const { category_id, amount, month, year } = req.body;
     if (!category_id || amount == null || !month || !year) {
       return res.status(400).json({ error: 'category_id, amount, month y year son requeridos' });
+    }
+    if (!(await categoryBelongsToUser(db, req.user.id, category_id))) {
+      return res.status(400).json({ error: 'La categoría seleccionada no existe' });
     }
     const [budget] = await db('budgets')
       .insert({ category_id, amount, month, year, user_id: req.user.id })

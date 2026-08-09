@@ -66,12 +66,12 @@ function projectAccount(balance, annualRate, monthlyContribution, months) {
 }
 
 const ACCOUNT_COLORS = [
-  { border: '#d4a574', bg: 'rgba(212, 165, 116, 0.15)' },
-  { border: '#7dab7d', bg: 'rgba(125, 171, 125, 0.15)' },
-  { border: '#c47a7a', bg: 'rgba(196, 122, 122, 0.15)' },
-  { border: '#a08090', bg: 'rgba(160, 128, 144, 0.15)' },
-  { border: '#b8a070', bg: 'rgba(184, 160, 112, 0.15)' },
-  { border: '#70a0b8', bg: 'rgba(112, 160, 184, 0.15)' },
+  { border: '#e2b153', bg: 'rgba(226, 177, 83, 0.15)' },
+  { border: '#4cc38a', bg: 'rgba(76, 195, 138, 0.15)' },
+  { border: '#e4635c', bg: 'rgba(228, 99, 92, 0.15)' },
+  { border: '#b48cf0', bg: 'rgba(180, 140, 240, 0.15)' },
+  { border: '#6fa8dc', bg: 'rgba(111, 168, 220, 0.15)' },
+  { border: '#e8be55', bg: 'rgba(232, 190, 85, 0.15)' },
 ]
 
 export default function Projections() {
@@ -265,8 +265,8 @@ export default function Projections() {
       ...(hasPlanData ? [{
         label: 'Sin plan (solo intereses)',
         data: noPlanTotalProjection.map(r => r.total),
-        borderColor: '#b0a090',
-        backgroundColor: 'rgba(176, 160, 144, 0.08)',
+        borderColor: '#8b95a8',
+        backgroundColor: 'rgba(139, 149, 168, 0.08)',
         fill: false,
         tension: 0.3,
         pointRadius: 2,
@@ -287,8 +287,8 @@ export default function Projections() {
       {
         label: hasPlanData ? 'Total con plan' : 'Total',
         data: totalProjection.map(r => r.total),
-        borderColor: '#2d3436',
-        backgroundColor: 'rgba(45, 52, 54, 0.08)',
+        borderColor: '#e2b153',
+        backgroundColor: 'rgba(226, 177, 83, 0.06)',
         fill: true,
         tension: 0.3,
         pointRadius: 3,
@@ -307,21 +307,21 @@ export default function Projections() {
       legend: {
         position: 'bottom',
         labels: {
-          color: '#8a7a6a',
-          font: { size: 11, family: 'Inter' },
+          color: '#8b95a8',
+          font: { size: 11, family: '"IBM Plex Mono", monospace' },
           padding: 16,
           usePointStyle: true,
           pointStyle: 'circle',
         },
       },
       tooltip: {
-        backgroundColor: '#f5ebe0',
-        titleColor: '#2d3436',
-        bodyColor: '#2d3436',
-        borderColor: '#d4c4b4',
+        backgroundColor: '#1b2130',
+        titleColor: '#eceee6',
+        bodyColor: '#a6b0c2',
+        borderColor: '#2c3650',
         borderWidth: 1,
         padding: 12,
-        cornerRadius: 12,
+        cornerRadius: 10,
         callbacks: {
           label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`,
         },
@@ -330,13 +330,13 @@ export default function Projections() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#8a7a6a', font: { size: 10, family: 'Inter' }, maxRotation: 45, maxTicksLimit: 12 },
+        ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 },
       },
       y: {
-        grid: { color: 'rgba(212, 196, 180, 0.3)' },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          color: '#8a7a6a',
-          font: { size: 11, family: 'Inter' },
+          color: '#8b95a8',
+          font: { size: 11, family: '"IBM Plex Mono", monospace' },
           callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
@@ -358,7 +358,7 @@ export default function Projections() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="relative">
-          <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '4px solid #e0d4c8', borderTopColor: 'var(--clay-accent)' }}></div>
+          <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '4px solid #2c3650', borderTopColor: 'var(--clay-accent)' }}></div>
         </div>
       </div>
     )
@@ -385,7 +385,7 @@ export default function Projections() {
             <DocumentTextIcon className="h-4 w-4" />
             Guardar
           </button>
-          <div className="flex items-center gap-2 ml-2 pl-3" style={{ borderLeft: '2px solid #d4c4b4' }}>
+          <div className="flex items-center gap-2 ml-2 pl-3" style={{ borderLeft: '2px solid #2c3650' }}>
             <label className="text-xs font-semibold" style={{ color: 'var(--clay-text-muted)' }}>Período:</label>
             <select
               value={months}
@@ -405,7 +405,7 @@ export default function Projections() {
 
       {accounts.length === 0 ? (
         <div className="clay-card p-12 text-center">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4" style={{ background: '#e8ddd0', boxShadow: 'var(--clay-shadow-inset)' }}>
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4" style={{ background: '#1b2130', boxShadow: 'var(--clay-shadow-inset)' }}>
             <WalletIcon className="h-10 w-10" style={{ color: 'var(--clay-text-muted)' }} />
           </div>
           <h3 className="text-xl font-display font-bold mb-2" style={{ color: 'var(--clay-text)' }}>No hay cuentas de ahorro</h3>
@@ -423,7 +423,7 @@ export default function Projections() {
           <div className="clay-card p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #7dab7d, #6d9b6d)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #3da966, #2c7444)', boxShadow: 'var(--clay-shadow-sm)' }}>
                   <PlusCircleIcon className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -500,7 +500,7 @@ export default function Projections() {
                   </p>
                   <div className="space-y-2">
                     {accounts.map((account) => (
-                      <div key={account.id} className="flex items-center gap-3 px-3 py-2 " style={{ background: '#e8ddd0' }}>
+                      <div key={account.id} className="flex items-center gap-3 px-3 py-2 " style={{ background: '#1b2130' }}>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate" style={{ color: 'var(--clay-text)' }}>{account.name}</p>
                           <p className="text-xs" style={{ color: 'var(--clay-text-muted)' }}>
@@ -543,7 +543,7 @@ export default function Projections() {
                 </div>
 
                 {hasPlanData && (
-                  <div className="flex items-center justify-between px-4 py-3 " style={{ background: 'rgba(125, 171, 125, 0.15)' }}>
+                  <div className="flex items-center justify-between px-4 py-3 " style={{ background: 'rgba(76, 195, 138, 0.1)' }}>
                     <span className="text-sm font-semibold" style={{ color: 'var(--clay-green)' }}>
                       Total a aportar mensualmente
                     </span>
@@ -597,7 +597,7 @@ export default function Projections() {
           {totalProjection.length > 0 && (
             <div className="clay-card p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e2b153, #b3872f)', boxShadow: 'var(--clay-shadow-sm)' }}>
                   <ChartBarIcon className="h-5 w-5 text-white" />
                 </div>
                 <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Evolución del patrimonio</h3>
@@ -640,7 +640,7 @@ export default function Projections() {
                 <div key={account.id} className="clay-card p-5">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e8ddd0, #d4c4b4)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                      <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #222a3c, #161b26)', boxShadow: 'var(--clay-shadow-sm)' }}>
                         <BanknotesIcon className="h-5 w-5" style={{ color: 'var(--clay-text)' }} />
                       </div>
                       <div>
@@ -696,7 +696,7 @@ export default function Projections() {
                     </div>
                   )}
                   {planActive && (
-                    <div className="mb-4 px-3 py-2 " style={{ background: 'rgba(125, 171, 125, 0.1)' }}>
+                    <div className="mb-4 px-3 py-2 " style={{ background: 'rgba(76, 195, 138, 0.08)' }}>
                       <div className="flex items-center justify-between">
                         <span className="text-xs" style={{ color: 'var(--clay-green)' }}>Aporte vía plan</span>
                         <span className="text-sm font-bold" style={{ color: 'var(--clay-text)' }}>
@@ -754,23 +754,23 @@ export default function Projections() {
           {hasPlanData && (
             <div className="clay-card p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #7dab7d, #6d9b6d)', boxShadow: 'var(--clay-shadow-sm)' }}>
+                <div className="w-10 h-10  flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #3da966, #2c7444)', boxShadow: 'var(--clay-shadow-sm)' }}>
                   <ArrowsRightLeftIcon className="h-5 w-5 text-white" />
                 </div>
                 <h3 className="font-display font-bold" style={{ color: 'var(--clay-text)' }}>Comparativa: Sin plan vs Con plan</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4  text-center" style={{ background: '#e8ddd0' }}>
+                <div className="p-4  text-center" style={{ background: '#1b2130' }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--clay-text-muted)' }}>Sin plan</p>
                   <p className="text-xl font-bold" style={{ color: 'var(--clay-text)' }}>{formatCurrency(totalNoPlanBalance)}</p>
                   <p className="text-xs mt-1" style={{ color: 'var(--clay-text-muted)' }}>solo intereses</p>
                 </div>
-                <div className="p-4  text-center" style={{ background: 'rgba(125, 171, 125, 0.15)' }}>
+                <div className="p-4  text-center" style={{ background: 'rgba(76, 195, 138, 0.1)' }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--clay-green)' }}>Con plan</p>
                   <p className="text-xl font-bold" style={{ color: 'var(--clay-green)' }}>{formatCurrency(totalProjectedBalance)}</p>
                   <p className="text-xs mt-1" style={{ color: 'var(--clay-text-muted)' }}>ahorrando {formatCurrency(totalContributionsPerMonth)}/mes</p>
                 </div>
-                <div className="p-4  text-center" style={{ background: 'rgba(212, 165, 116, 0.15)' }}>
+                <div className="p-4  text-center" style={{ background: 'rgba(226, 177, 83, 0.1)' }}>
                   <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--clay-accent)' }}>Diferencia</p>
                   <p className="text-xl font-bold" style={{ color: 'var(--clay-accent)' }}>
                     +{formatCurrency(totalProjectedBalance - totalNoPlanBalance)}
@@ -834,7 +834,7 @@ export default function Projections() {
       {showSaveModal && (
         <div className="modal-overlay" onClick={() => setShowSaveModal(false)}>
           <div className="modal-content animate-scale-in max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Guardar escenario</h3>
             </div>
             <div className="p-5 space-y-4">
@@ -883,7 +883,7 @@ export default function Projections() {
       {showLoadModal && (
         <div className="modal-overlay" onClick={() => setShowLoadModal(false)}>
           <div className="modal-content animate-scale-in max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Mis escenarios</h3>
               <div className="flex items-center gap-2">
                 <input
@@ -906,7 +906,7 @@ export default function Projections() {
               ) : (
                 <div className="space-y-2">
                   {savedList.map(sc => (
-                    <div key={sc.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--clay-card)', border: '1px solid rgba(255,255,255,0.5)' }}>
+                    <div key={sc.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--clay-card)', border: '1px solid var(--line)' }}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate" style={{ color: 'var(--clay-text)' }}>{sc.name}</p>
                         <p className="text-xs mt-0.5" style={{ color: 'var(--clay-text-muted)' }}>
@@ -927,7 +927,7 @@ export default function Projections() {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#2c3650' }}>
               <button onClick={() => setShowLoadModal(false)} className="clay-btn px-4 py-2 text-sm">Cerrar</button>
             </div>
           </div>

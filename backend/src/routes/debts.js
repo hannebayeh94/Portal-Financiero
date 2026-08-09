@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { isPositiveNumber } = require('../utils/validation');
+const { logFinancial } = require('../utils/logger');
 const {
   buildCycles,
   assignMovementsToCycles,
@@ -39,7 +41,18 @@ router.get('/calculator', async (req, res) => {
 
     const principal = parseFloat(amount);
     const annualRate = parseFloat(rate);
-    const termMonths = parseInt(months);
+    const termMonths = parseInt(months, 10);
+
+    if (!isPositiveNumber(principal)) {
+      return res.status(400).json({ error: 'El monto debe ser un número mayor a cero' });
+    }
+    if (!Number.isFinite(annualRate) || annualRate < 0) {
+      return res.status(400).json({ error: 'La tasa de interés debe ser un número mayor o igual a cero' });
+    }
+    if (!Number.isInteger(termMonths) || termMonths < 1 || termMonths > 120) {
+      return res.status(400).json({ error: 'months debe ser un entero entre 1 y 120' });
+    }
+
     const monthlyRate = annualRate / 100 / 12;
 
     let monthlyPayment;
@@ -302,6 +315,14 @@ router.post('/:id/payments', async (req, res) => {
     const { id } = req.params;
     const { amount, payment_date } = req.body;
 
+    const amountNum = parseFloat(amount);
+    if (!isPositiveNumber(amountNum)) {
+      return res.status(400).json({ error: 'El monto del pago debe ser mayor a cero' });
+    }
+    if (!payment_date) {
+      return res.status(400).json({ error: 'La fecha del pago es requerida' });
+    }
+
     const debt = await db('debts')
       .where({ id, user_id: req.user.id })
       .first();
@@ -310,52 +331,63 @@ router.post('/:id/payments', async (req, res) => {
       return res.status(404).json({ error: 'Deuda no encontrada' });
     }
 
-    const monthlyRate = parseFloat(debt.interest_rate) / 100 / 12;
-    const interestPortion = parseFloat(debt.current_balance) * monthlyRate;
-    const capitalPortion = parseFloat(amount) - interestPortion;
-    const newBalance = parseFloat(debt.current_balance) - capitalPortion;
+    const payment = await db.transaction(async (trx) => {
+      const currentBalance = parseFloat(debt.current_balance);
+      const monthlyRate = parseFloat(debt.interest_rate) / 100 / 12;
+      const interestPortion = currentBalance * monthlyRate;
 
-    const [payment] = await db('debt_payments')
-      .insert({
-        debt_id: id,
-        amount,
-        capital_portion: capitalPortion,
-        interest_portion: interestPortion,
-        payment_date,
-        remaining_balance: Math.max(0, newBalance),
-        type: 'payment'
-      })
-      .returning('*');
+      // Si el pago no cubre los intereses del mes, todo se abona a intereses y
+      // el capital no se reduce (evita saldo/capital negativos).
+      const capitalPortion = Math.max(0, amountNum - interestPortion);
+      const newBalance = Math.max(0, currentBalance - capitalPortion);
+      const interestRecorded = Math.min(interestPortion, amountNum);
 
-    await db('debts')
-      .where({ id })
-      .update({
-        current_balance: Math.max(0, newBalance),
-        remaining_months: debt.remaining_months - 1,
-        status: newBalance <= 0 ? 'paid' : debt.status,
-        updated_at: db.fn.now()
-      });
-
-    let expenseCategory = await db('categories')
-      .where({ user_id: req.user.id, name: 'Pago Deuda', type: 'expense' })
-      .first();
-
-    if (!expenseCategory) {
-      [expenseCategory] = await db('categories')
-        .insert({ name: 'Pago Deuda', type: 'expense', color: '#EF4444', user_id: req.user.id })
+      const [paymentRow] = await trx('debt_payments')
+        .insert({
+          debt_id: id,
+          amount: amountNum,
+          capital_portion: Math.round(capitalPortion * 100) / 100,
+          interest_portion: Math.round(interestRecorded * 100) / 100,
+          payment_date,
+          remaining_balance: Math.round(newBalance * 100) / 100,
+          type: 'payment'
+        })
         .returning('*');
-    }
 
-    await db('expenses')
-      .insert({
-        amount,
-        description: `Pago deuda: ${debt.name}`,
-        date: payment_date,
-        category_id: expenseCategory.id,
-        type: 'fixed',
-        recurring: false,
-        user_id: req.user.id
-      });
+      await trx('debts')
+        .where({ id })
+        .update({
+          current_balance: Math.round(newBalance * 100) / 100,
+          remaining_months: Math.max(0, (debt.remaining_months || 0) - 1),
+          status: newBalance <= 0 ? 'paid' : debt.status,
+          updated_at: trx.fn.now()
+        });
+
+      let expenseCategory = await trx('categories')
+        .where({ user_id: req.user.id, name: 'Pago Deuda', type: 'expense' })
+        .first();
+
+      if (!expenseCategory) {
+        [expenseCategory] = await trx('categories')
+          .insert({ name: 'Pago Deuda', type: 'expense', color: '#EF4444', user_id: req.user.id })
+          .returning('*');
+      }
+
+      await trx('expenses')
+        .insert({
+          amount: amountNum,
+          description: `Pago deuda: ${debt.name}`,
+          date: payment_date,
+          category_id: expenseCategory.id,
+          type: 'fixed',
+          recurring: false,
+          user_id: req.user.id
+        });
+
+      return paymentRow;
+    });
+
+    logFinancial(req.user.id, 'debt.payment', { debtId: id, amount: amountNum });
 
     res.status(201).json(payment);
   } catch (error) {
@@ -386,27 +418,33 @@ router.post('/:id/charges', async (req, res) => {
     const newBalance = parseFloat(debt.current_balance) + chargeAmount;
     const newTotal = parseFloat(debt.total_amount) + chargeAmount;
 
-    const [charge] = await db('debt_payments')
-      .insert({
-        debt_id: id,
-        amount: chargeAmount,
-        capital_portion: chargeAmount,
-        interest_portion: 0,
-        payment_date,
-        remaining_balance: newBalance,
-        type: 'charge',
-        description: description || null
-      })
-      .returning('*');
+    const charge = await db.transaction(async (trx) => {
+      const [chargeRow] = await trx('debt_payments')
+        .insert({
+          debt_id: id,
+          amount: chargeAmount,
+          capital_portion: chargeAmount,
+          interest_portion: 0,
+          payment_date,
+          remaining_balance: newBalance,
+          type: 'charge',
+          description: description || null
+        })
+        .returning('*');
 
-    await db('debts')
-      .where({ id })
-      .update({
-        current_balance: newBalance,
-        total_amount: newTotal,
-        status: debt.status === 'paid' ? 'active' : debt.status,
-        updated_at: db.fn.now()
-      });
+      await trx('debts')
+        .where({ id })
+        .update({
+          current_balance: newBalance,
+          total_amount: newTotal,
+          status: debt.status === 'paid' ? 'active' : debt.status,
+          updated_at: trx.fn.now()
+        });
+
+      return chargeRow;
+    });
+
+    logFinancial(req.user.id, 'debt.charge', { debtId: id, amount: chargeAmount });
 
     res.status(201).json(charge);
   } catch (error) {
@@ -456,24 +494,28 @@ router.put('/:id/payments/:paymentId', async (req, res) => {
       const newBalance = parseFloat(debt.current_balance) + delta;
       const newTotal = parseFloat(debt.total_amount) + delta;
 
-      const [charge] = await db('debt_payments')
-        .where({ id: paymentId })
-        .update({
-          amount,
-          capital_portion: amount,
-          payment_date,
-          remaining_balance: newBalance
-        })
-        .returning('*');
+      const charge = await db.transaction(async (trx) => {
+        const [chargeRow] = await trx('debt_payments')
+          .where({ id: paymentId })
+          .update({
+            amount,
+            capital_portion: amount,
+            payment_date,
+            remaining_balance: newBalance
+          })
+          .returning('*');
 
-      await db('debts')
-        .where({ id })
-        .update({
-          current_balance: newBalance,
-          total_amount: newTotal,
-          status: newBalance > 0 && debt.status === 'paid' ? 'active' : debt.status,
-          updated_at: db.fn.now()
-        });
+        await trx('debts')
+          .where({ id })
+          .update({
+            current_balance: newBalance,
+            total_amount: newTotal,
+            status: newBalance > 0 && debt.status === 'paid' ? 'active' : debt.status,
+            updated_at: trx.fn.now()
+          });
+
+        return chargeRow;
+      });
 
       return res.json(charge);
     }
@@ -518,43 +560,54 @@ router.delete('/:id/payments/:paymentId', async (req, res) => {
       return res.status(404).json({ error: 'Pago no encontrado' });
     }
 
-    await db('debt_payments').where({ id: paymentId }).del();
+    let responseMessage = 'Pago eliminado';
 
-    // Consumo: revertir el aumento de saldo y total
-    if (payment.type === 'charge') {
-      const newBalance = Math.max(0, parseFloat(debt.current_balance) - parseFloat(payment.amount));
-      const newTotal = Math.max(0, parseFloat(debt.total_amount) - parseFloat(payment.amount));
-      await db('debts')
+    await db.transaction(async (trx) => {
+      await trx('debt_payments').where({ id: paymentId }).del();
+
+      // Consumo: revertir el aumento de saldo y total
+      if (payment.type === 'charge') {
+        const newBalance = Math.max(0, parseFloat(debt.current_balance) - parseFloat(payment.amount));
+        const newTotal = Math.max(0, parseFloat(debt.total_amount) - parseFloat(payment.amount));
+        await trx('debts')
+          .where({ id })
+          .update({
+            current_balance: newBalance,
+            total_amount: newTotal,
+            status: newBalance <= 0 ? 'paid' : debt.status,
+            updated_at: trx.fn.now()
+          });
+
+        responseMessage = 'Consumo eliminado';
+        return;
+      }
+
+      const newBalance = parseFloat(debt.current_balance) + parseFloat(payment.capital_portion);
+      await trx('debts')
         .where({ id })
         .update({
           current_balance: newBalance,
-          total_amount: newTotal,
-          status: newBalance <= 0 ? 'paid' : debt.status,
-          updated_at: db.fn.now()
+          remaining_months: (debt.remaining_months || 0) + 1,
+          status: 'active',
+          updated_at: trx.fn.now()
         });
 
-      return res.json({ message: 'Consumo eliminado' });
-    }
+      await trx('expenses')
+        .where({
+          user_id: req.user.id,
+          description: `Pago deuda: ${debt.name}`,
+          date: payment.payment_date
+        })
+        .del();
+    });
 
-    const newBalance = parseFloat(debt.current_balance) + parseFloat(payment.capital_portion);
-    await db('debts')
-      .where({ id })
-      .update({
-        current_balance: newBalance,
-        remaining_months: debt.remaining_months + 1,
-        status: 'active',
-        updated_at: db.fn.now()
-      });
+    logFinancial(req.user.id, responseMessage === 'Consumo eliminado' ? 'debt.charge.delete' : 'debt.payment.delete', {
+      debtId: id,
+      paymentId,
+      amount: parseFloat(payment.amount) || 0,
+    });
 
-    await db('expenses')
-      .where({
-        user_id: req.user.id,
-        description: `Pago deuda: ${debt.name}`,
-        date: payment.payment_date
-      })
-      .del();
-
-    res.json({ message: 'Pago eliminado' });
+    res.json({ message: responseMessage });
   } catch (error) {
     res.status(500).json({ error: 'Error al eliminar pago' });
   }

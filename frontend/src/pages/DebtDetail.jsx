@@ -221,12 +221,12 @@ export default function DebtDetail() {
       {
         label: 'Saldo Restante',
         data: projection?.projection?.filter((_, i) => i % 2 === 0 || i === projection.projection.length - 1).map(p => p.remaining_balance) || [],
-        borderColor: '#0ea5e9',
-        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+        borderColor: '#6fa8dc',
+        backgroundColor: 'rgba(111, 168, 220, 0.12)',
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#0ea5e9',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: '#6fa8dc',
+        pointBorderColor: '#11151e',
         pointBorderWidth: 2,
         pointRadius: 4,
       },
@@ -244,12 +244,12 @@ export default function DebtDetail() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#64748b', font: { size: 11 } },
+        ticks: { color: '#7c8698', font: { size: 11 } },
       },
       y: {
-        grid: { color: 'rgba(226, 232, 240, 0.5)' },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: { 
-          color: '#64748b', 
+          color: '#7c8698', 
           font: { size: 11 },
           callback: (value) => '$' + value.toLocaleString(),
         },

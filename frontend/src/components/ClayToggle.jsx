@@ -9,13 +9,13 @@ export default function ClayToggle({ id, checked, onChange, label }) {
           onChange={(e) => onChange(e.target.checked)}
           className="sr-only"
         />
-        <div className={`w-11 h-6 rounded-full transition-all duration-300 ${
+        <div className={`w-11 h-6 rounded-full transition-all duration-300 border ${
           checked
-            ? 'bg-gradient-to-r from-primary-400 to-primary-500 shadow-clay-sm'
-            : 'bg-[#e0d4c4] shadow-clay-inset'
+            ? 'bg-gradient-to-r from-primary-400 to-primary-500 border-primary-300'
+            : 'bg-dark-100 border-dark-300 shadow-clay-inset'
         }`}>
-          <div className={`w-[18px] h-[18px] rounded-full bg-[#f5ebe0] shadow-clay-sm transition-all duration-300 absolute top-[3px] ${
-            checked ? 'left-[23px]' : 'left-[3px]'
+          <div className={`w-[18px] h-[18px] rounded-full transition-all duration-300 absolute top-[3px] ${
+            checked ? 'left-[23px] bg-[#1a1407]' : 'left-[3px] bg-dark-500'
           }`} />
         </div>
       </div>

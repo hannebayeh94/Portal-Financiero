@@ -2,7 +2,27 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { BanknotesIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { EyeIcon, EyeSlashIcon, CheckCircleIcon, ShieldCheckIcon, LockClosedIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+
+function BrandMark({ small = false }) {
+  return (
+    <div
+      className={`${small ? 'w-10 h-10' : 'w-14 h-14'} rounded-full flex items-center justify-center flex-shrink-0 border shadow-[0_0_0_5px_rgba(226,177,83,0.12),0_0_0_7px_rgba(226,177,83,0.06)]`}
+      style={{ background: 'radial-gradient(circle at 35% 30%, #f0cb7e, #d9a440 70%)', borderColor: '#b3872f' }}
+    >
+      <span className={`${small ? 'text-base' : 'text-xl'} text-[#1a1407] leading-none font-bold`} style={{ fontFamily: 'Fraunces, serif' }}>
+        PF
+      </span>
+    </div>
+  )
+}
+
+const benefits = [
+  'Control total de ingresos y egresos',
+  'Gestión inteligente de deudas',
+  'Proyecciones financieras a futuro',
+  'Reportes detallados y gráficos',
+]
 
 export default function Register() {
   const [name, setName] = useState('')
@@ -32,85 +52,102 @@ export default function Register() {
     }
   }
 
-  const benefits = [
-    'Control total de ingresos y egresos',
-    'Gestión inteligente de deudas',
-    'Proyecciones financieras a futuro',
-    'Reportes detallados y gráficos',
-  ]
-
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="relative z-10 flex flex-col justify-center px-12 lg:px-16">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8">
-            <BanknotesIcon className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-display font-bold text-white mb-4">
-            Portal Financiero
+    <div className="min-h-screen lg:grid lg:grid-cols-[1.1fr_1fr]">
+      {/* Vault branding */}
+      <div className="hidden lg:flex flex-col justify-center px-16 xl:px-24 relative overflow-hidden border-r border-dark-200" style={{ background: 'var(--ink-900)' }}>
+        <div className="absolute inset-0" style={{ background: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 40px)' }} />
+        <div className="absolute -top-32 -right-24 w-[480px] h-[480px] rounded-full blur-[120px]" style={{ background: 'rgba(226,177,83,0.12)' }} />
+        <div className="absolute -bottom-40 -left-24 w-[480px] h-[480px] rounded-full blur-[120px]" style={{ background: 'rgba(76,195,138,0.08)' }} />
+
+        <div className="relative z-10 max-w-lg">
+          <BrandMark />
+          <p className="eyebrow mt-8">Abre tu cuenta</p>
+          <h1 className="mt-4 text-6xl font-medium text-dark-800 leading-[1.05]" style={{ fontFamily: 'Fraunces, serif' }}>
+            Escribe el primer capítulo
+            <span className="italic text-primary-500"> de tu dinero</span>
           </h1>
-          <p className="text-xl text-white/80 max-w-md mb-12">
-            Únete y transforma la forma en que administras tu dinero
+          <p className="mt-6 text-lg text-dark-500 leading-relaxed max-w-md">
+            Únete y transforma la forma en que administras tu dinero. Sin comisiones, sin letra pequeña.
           </p>
-          <div className="space-y-4">
+
+          <div className="mt-10 space-y-4">
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <CheckCircleIcon className="h-6 w-6 text-success-400" />
-                <span className="text-white/90">{benefit}</span>
+              <div key={index} className="flex items-center gap-3 py-2 border-b border-dark-200">
+                <span className="fig text-xs text-primary-500 w-8">{String(index + 1).padStart(2, '0')}</span>
+                <CheckCircleIcon className="h-5 w-5 text-success-500" />
+                <span className="text-sm text-dark-300">{benefit}</span>
               </div>
             ))}
           </div>
         </div>
+
+        <p className="relative z-10 mt-16 text-[11px] tracking-[0.2em] uppercase text-dark-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+          Portal Financiero · Libro Mayor v2
+        </p>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-dark-50">
-        <div className="w-full max-w-md">
+      {/* Access slip */}
+      <div className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-[420px]">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">PF</span>
+            <BrandMark small />
+            <div className="leading-tight">
+              <span className="block text-xl font-semibold text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>Portal Financiero</span>
+              <span className="block text-[10px] tracking-[0.2em] uppercase text-dark-500" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>Bóveda personal</span>
             </div>
-            <span className="text-2xl font-display font-bold text-dark-900">Portal Financiero</span>
           </div>
 
-          <div className="card p-8">
-            <div className="mb-8">
-              <h2 className="text-2xl font-display font-bold text-dark-900">Crear Cuenta</h2>
-              <p className="text-dark-500 mt-2">Comienza a administrar tus finanzas hoy</p>
+          <div className="slip p-8 animate-slide-up">
+            <div className="flex items-center justify-between text-[11px] tracking-[0.16em] uppercase text-[#6f6a55]" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              <span>Portal Financiero</span>
+              <span>No. 0002</span>
             </div>
+            <p className="mt-1 text-[11px] tracking-[0.16em] uppercase text-[#6f6a55]" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              Apertura de cuenta
+            </p>
+            <div className="my-6" style={{ borderTop: '2px dashed rgba(38,40,31,0.3)' }} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <h2 className="text-3xl font-medium" style={{ color: '#26281f', fontFamily: 'Fraunces, serif' }}>
+              Crear cuenta
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: '#6f6a55' }}>
+              Comienza a administrar tus finanzas hoy
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-7 space-y-4">
               <div>
-                <label className="input-label">Nombre Completo</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: '#6f6a55', fontFamily: '"IBM Plex Mono", monospace' }}>
+                  Nombre completo
+                </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="input-field"
+                  className="slip-input"
                 />
               </div>
 
               <div>
-                <label className="input-label">Correo Electrónico</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: '#6f6a55', fontFamily: '"IBM Plex Mono", monospace' }}>
+                  Correo electrónico
+                </label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
-                  className="input-field"
+                  className="slip-input"
                 />
               </div>
 
               <div>
-                <label className="input-label">Contraseña</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: '#6f6a55', fontFamily: '"IBM Plex Mono", monospace' }}>
+                  Contraseña
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -118,54 +155,58 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="input-field pr-12"
+                    className="slip-input pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-dark-400 hover:text-dark-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                    style={{ color: '#8a8168' }}
                   >
-                    {showPassword ? (
-                      <EyeSlashIcon className="h-5 w-5" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="input-label">Confirmar Contraseña</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: '#6f6a55', fontFamily: '"IBM Plex Mono", monospace' }}>
+                  Confirmar contraseña
+                </label>
                 <input
                   type="password"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input-field"
+                  className="slip-input"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 text-base font-semibold rounded-xl text-[#1a1407] transition-all disabled:opacity-60 mt-1"
+                style={{ background: 'linear-gradient(180deg, #e9bd66, #d9a440)', border: '1px solid #b3872f', boxShadow: '0 10px 24px -12px rgba(179,135,47,0.5)' }}
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="inline-block w-5 h-5 border-2 border-[#1a1407]/50 border-t-[#1a1407] rounded-full animate-spin align-middle" />
                 ) : (
-                  'Crear Cuenta'
+                  'Crear cuenta'
                 )}
               </button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-dark-500">
-                ¿Ya tienes cuenta?{' '}
-                <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
-                  Inicia sesión
-                </Link>
-              </p>
+            <div className="mt-6 flex items-center justify-center gap-1.5 text-sm" style={{ color: '#6f6a55' }}>
+              <span>¿Ya tienes cuenta?</span>
+              <Link to="/login" className="font-semibold underline underline-offset-4" style={{ color: '#8a6a1f' }}>
+                Inicia sesión
+              </Link>
+            </div>
+
+            <div className="mt-7 flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[#8a8168]" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              <span className="flex items-center gap-1.5"><ShieldCheckIcon className="h-3.5 w-3.5" /> Cifrado AES</span>
+              <span className="flex items-center gap-1.5"><LockClosedIcon className="h-3.5 w-3.5" /> Sesión segura</span>
+              <span className="flex items-center gap-1.5"><ChartBarIcon className="h-3.5 w-3.5" /> 1 cuenta</span>
             </div>
           </div>
         </div>

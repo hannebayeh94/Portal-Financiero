@@ -13,7 +13,7 @@ import {
   ArcElement,
   Filler,
 } from 'chart.js'
-import { Line, Doughnut } from 'react-chartjs-2'
+import { Line } from 'react-chartjs-2'
 import api from '../services/api'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 import {
@@ -21,8 +21,6 @@ import {
   ArrowTrendingDownIcon,
   BanknotesIcon,
   WalletIcon,
-  ArrowUpRightIcon,
-  ArrowDownRightIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline'
 
@@ -38,6 +36,13 @@ ChartJS.register(
   ArcElement,
   Filler
 )
+
+const GOLD = '#e2b153'
+const GOLD_SOFT = 'rgba(226, 177, 83, 0.12)'
+const RED = '#e4635c'
+const RED_SOFT = 'rgba(228, 99, 92, 0.12)'
+const MUTED = '#7c8698'
+const GRID = 'rgba(255, 255, 255, 0.05)'
 
 export default function Dashboard() {
   const [monthlyData, setMonthlyData] = useState(null)
@@ -76,8 +81,8 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-primary-200 rounded-full"></div>
-          <div className="w-16 h-16 border-4 border-primary-600 rounded-full animate-spin border-t-transparent absolute top-0 left-0"></div>
+          <div className="w-16 h-16 border border-dark-300 rounded-full"></div>
+          <div className="w-16 h-16 border-2 border-primary-500 rounded-full animate-spin border-t-transparent absolute top-0 left-0"></div>
         </div>
       </div>
     )
@@ -94,28 +99,28 @@ export default function Dashboard() {
       {
         label: 'Ingresos',
         data: monthlyData?.data.map(d => d.income) || [],
-        borderColor: '#22c55e',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        borderColor: GOLD,
+        backgroundColor: GOLD_SOFT,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#22c55e',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: GOLD,
+        pointBorderColor: '#11151e',
         pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
       {
         label: 'Egresos',
         data: monthlyData?.data.map(d => d.expenses) || [],
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderColor: RED,
+        backgroundColor: RED_SOFT,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#ef4444',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: RED,
+        pointBorderColor: '#11151e',
         pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   }
@@ -127,136 +132,203 @@ export default function Dashboard() {
       legend: {
         display: false,
       },
+      tooltip: {
+        backgroundColor: '#1b2130',
+        borderColor: '#2c3650',
+        borderWidth: 1,
+        titleColor: '#eceee6',
+        bodyColor: '#a6b0c2',
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: {
+          label: (ctx) => '  ' + formatCurrency(ctx.parsed.y),
+        },
+      },
     },
     scales: {
       x: {
-        grid: {
-          display: false,
-        },
+        grid: { display: false },
         ticks: {
-          color: '#64748b',
-          font: {
-            size: 12,
-          },
+          color: MUTED,
+          font: { family: '"IBM Plex Mono", monospace', size: 11 },
         },
       },
       y: {
         beginAtZero: true,
-        grid: {
-          color: 'rgba(226, 232, 240, 0.5)',
-        },
+        grid: { color: GRID },
         ticks: {
-          color: '#64748b',
-          font: {
-            size: 12,
-          },
-          callback: (value) => '$' + value.toLocaleString(),
+          color: MUTED,
+          font: { family: '"IBM Plex Mono", monospace', size: 11 },
+          callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
     },
   }
 
+  const today = new Date()
+  const monthLabel = `${getMonthName(today.getMonth() + 1)} ${today.getFullYear()}`
+
+  const stats = [
+    {
+      label: 'Ingresos del mes',
+      value: formatCurrency(totalIncome),
+      icon: ArrowTrendingUpIcon,
+      tone: 'success',
+    },
+    {
+      label: 'Egresos del mes',
+      value: formatCurrency(totalExpenses),
+      icon: ArrowTrendingDownIcon,
+      tone: 'danger',
+    },
+    {
+      label: 'Deudas activas',
+      value: formatCurrency(debtStatus?.total_debt || 0),
+      icon: BanknotesIcon,
+      tone: 'gold',
+    },
+    {
+      label: 'Total ahorros',
+      value: formatCurrency(savingsSummary?.total_balance || 0),
+      icon: WalletIcon,
+      tone: 'violet',
+    },
+  ]
+
+  const toneMap = {
+    success: { color: '#4cc38a', bg: 'rgba(76,195,138,0.1)' },
+    danger: { color: '#e4635c', bg: 'rgba(228,99,92,0.1)' },
+    gold: { color: '#e2b153', bg: 'rgba(226,177,83,0.1)' },
+    violet: { color: '#b48cf0', bg: 'rgba(180,140,240,0.1)' },
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-dark-900">Dashboard</h1>
-          <p className="text-dark-500 mt-1">Resumen de tu situación financiera</p>
+          <p className="eyebrow">Resumen del mes · {monthLabel}</p>
+          <h1 className="mt-2 text-4xl font-medium text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>
+            Estado financiero
+          </h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2">
           <Link to="/incomes" className="btn-primary">
             <PlusIcon className="h-5 w-5 mr-2" />
-            Nuevo Ingreso
+            Nuevo ingreso
           </Link>
           <Link to="/expenses" className="btn-secondary">
             <PlusIcon className="h-5 w-5 mr-2" />
-            Nuevo Egreso
+            Nuevo egreso
           </Link>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
-        <div className="stat-card animate-slide-up" style={{ animationDelay: '0ms' }}>
-          <div className="stat-icon bg-success-100">
-            <ArrowTrendingUpIcon className="h-6 w-6 text-success-600" />
+      {/* Hero: balance slip + savings rate */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 slip p-8 animate-slide-up" style={{ animationDelay: '0ms' }}>
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: '#6f6a55', fontFamily: '"IBM Plex Mono", monospace' }}>
+                Portal Financiero · Estado de cuenta
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.18em]" style={{ color: '#8a8168', fontFamily: '"IBM Plex Mono", monospace' }}>
+                Balance neto del mes
+              </p>
+            </div>
+            <div className="stamp w-20 h-20 sm:w-28 sm:h-28" style={{ fontSize: '8px', lineHeight: '1.4' }}>
+              <span>Verificado</span>
+              <span>{today.getFullYear()}</span>
+              <span>· Bóveda ·</span>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-dark-500">Ingresos del Mes</p>
-            <p className="text-2xl font-bold text-dark-900">{formatCurrency(totalIncome)}</p>
-          </div>
-          <div className="flex items-center text-success-600 text-sm font-medium">
-            <ArrowUpRightIcon className="h-4 w-4" />
+
+          <p
+            className="fig mt-4 text-5xl xl:text-6xl font-semibold"
+            style={{ color: balance >= 0 ? '#26281f' : '#a8442e' }}
+          >
+            {formatCurrency(balance)}
+          </p>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: balance >= 0 ? '#4a7a45' : '#a8442e', fontFamily: '"IBM Plex Mono", monospace' }}>
+            {balance >= 0 ? '▲ Positivo este mes' : '▼ Negativo este mes'}
+          </p>
+
+          <div className="mt-7 grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(38,40,31,0.18)' }}>
+              <span className="text-[#6f6a55]">Ingresos</span>
+              <span className="fig font-semibold" style={{ color: '#3d7a4a' }}>+ {formatCurrency(totalIncome)}</span>
+            </div>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(38,40,31,0.18)' }}>
+              <span className="text-[#6f6a55]">Egresos</span>
+              <span className="fig font-semibold" style={{ color: '#a8442e' }}>− {formatCurrency(totalExpenses)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="stat-card animate-slide-up" style={{ animationDelay: '50ms' }}>
-          <div className="stat-icon bg-danger-100">
-            <ArrowTrendingDownIcon className="h-6 w-6 text-danger-600" />
+        <div className="card p-7 flex flex-col justify-center animate-slide-up" style={{ animationDelay: '80ms' }}>
+          <p className="eyebrow">Tasa de ahorro</p>
+          <p className="fig mt-3 text-5xl font-semibold text-success-500">{savingsRate}%</p>
+          <p className="mt-1 text-sm text-dark-400">de tu ingreso se convierte en patrimonio</p>
+          <div className="mt-6 w-full h-2.5 rounded-full bg-dark-100 border border-dark-200 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #b3872f, #e2b153)' }}
+            />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-dark-500">Egresos del Mes</p>
-            <p className="text-2xl font-bold text-dark-900">{formatCurrency(totalExpenses)}</p>
-          </div>
-          <div className="flex items-center text-danger-600 text-sm font-medium">
-            <ArrowDownRightIcon className="h-4 w-4" />
-          </div>
-        </div>
-
-        <div className="stat-card animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <div className="stat-icon bg-primary-100">
-            <BanknotesIcon className="h-6 w-6 text-primary-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-dark-500">Deudas Activas</p>
-            <p className="text-2xl font-bold text-dark-900">
-              {formatCurrency(debtStatus?.total_debt || 0)}
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-card animate-slide-up" style={{ animationDelay: '150ms' }}>
-          <div className="stat-icon bg-purple-100">
-            <WalletIcon className="h-6 w-6 text-purple-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-dark-500">Total Ahorros</p>
-            <p className="text-2xl font-bold text-dark-900">
-              {formatCurrency(savingsSummary?.total_balance || 0)}
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-card animate-slide-up" style={{ animationDelay: '200ms' }}>
-          <div className={`stat-icon ${balance >= 0 ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-            <BanknotesIcon className={`h-6 w-6 ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-dark-500">Balance Neto</p>
-            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-dark-900' : 'text-rose-600'}`}>
-              {formatCurrency(balance)}
-            </p>
+          <div className="mt-6 space-y-2.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-dark-400">Ingresos</span>
+              <span className="fig font-semibold text-dark-800">{formatCurrency(totalIncome)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dark-400">Egresos</span>
+              <span className="fig font-semibold text-dark-800">{formatCurrency(totalExpenses)}</span>
+            </div>
+            <div className="flex justify-between pt-2" style={{ borderTop: '1px solid var(--line)' }}>
+              <span className="text-dark-400">Balance neto</span>
+              <span className={`fig font-bold ${balance >= 0 ? 'text-success-500' : 'text-danger-500'}`}>{formatCurrency(balance)}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Charts Row */}
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <div key={stat.label} className="card p-6 animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+            <div className="flex items-center justify-between">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center border"
+                style={{ background: toneMap[stat.tone].bg, borderColor: 'var(--line)' }}
+              >
+                <stat.icon className="h-5 w-5" style={{ color: toneMap[stat.tone].color }} />
+              </div>
+              <span className="w-2 h-2 rounded-full" style={{ background: toneMap[stat.tone].color }} />
+            </div>
+            <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-dark-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              {stat.label}
+            </p>
+            <p className="fig mt-1 text-2xl font-semibold text-dark-800">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 card p-6">
+        <div className="xl:col-span-2 card p-7 animate-slide-up" style={{ animationDelay: '120ms' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-display font-bold text-dark-900">Evolución Mensual</h3>
-              <p className="text-sm text-dark-500">Ingresos vs Egresos</p>
+              <p className="eyebrow">Evolución mensual</p>
+              <h3 className="mt-1 text-xl text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>Ingresos vs egresos</h3>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success-500"></div>
-                <span className="text-xs text-dark-500">Ingresos</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: GOLD }} />
+                <span className="text-xs text-dark-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>INGRESOS</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-danger-500"></div>
-                <span className="text-xs text-dark-500">Egresos</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: RED }} />
+                <span className="text-xs text-dark-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>EGRESOS</span>
               </div>
             </div>
           </div>
@@ -265,45 +337,45 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-6">
-          <h3 className="text-lg font-display font-bold text-dark-900 mb-6">Balance del Mes</h3>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-success-50 rounded-2xl">
+        <div className="card p-7 animate-slide-up" style={{ animationDelay: '180ms' }}>
+          <p className="eyebrow">Liquidación del mes</p>
+          <div className="mt-5 space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-dark-100 border border-dark-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-success-100 rounded-xl flex items-center justify-center">
-                  <ArrowTrendingUpIcon className="h-5 w-5 text-success-600" />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(76,195,138,0.1)' }}>
+                  <ArrowTrendingUpIcon className="h-4 w-4 text-success-500" />
                 </div>
-                <span className="font-medium text-dark-700">Ingresos</span>
+                <span className="text-sm text-dark-400">Ingresos</span>
               </div>
-              <span className="font-bold text-success-600">{formatCurrency(totalIncome)}</span>
+              <span className="fig font-semibold text-success-500">{formatCurrency(totalIncome)}</span>
             </div>
-            
-            <div className="flex items-center justify-between p-4 bg-danger-50 rounded-2xl">
+
+            <div className="flex items-center justify-between p-4 rounded-xl bg-dark-100 border border-dark-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-danger-100 rounded-xl flex items-center justify-center">
-                  <ArrowTrendingDownIcon className="h-5 w-5 text-danger-600" />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(228,99,92,0.1)' }}>
+                  <ArrowTrendingDownIcon className="h-4 w-4 text-danger-500" />
                 </div>
-                <span className="font-medium text-dark-700">Egresos</span>
+                <span className="text-sm text-dark-400">Egresos</span>
               </div>
-              <span className="font-bold text-danger-600">{formatCurrency(totalExpenses)}</span>
+              <span className="fig font-semibold text-danger-500">{formatCurrency(totalExpenses)}</span>
             </div>
-            
-            <div className="p-4 bg-dark-900 rounded-2xl">
+
+            <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(180deg, #1f2637, #171c29)', border: '1px solid #2c3650' }}>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-white">Balance Neto</span>
-                <span className={`text-xl font-bold ${balance >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
+                <span className="text-sm text-dark-300">Balance neto</span>
+                <span className={`fig text-2xl font-semibold ${balance >= 0 ? 'text-success-400' : 'text-danger-400'}`}>
                   {formatCurrency(balance)}
                 </span>
               </div>
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-dark-400">Tasa de ahorro</span>
-                  <span className="text-white font-medium">{savingsRate}%</span>
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-dark-500">Tasa de ahorro</span>
+                  <span className="fig text-success-500 font-semibold">{savingsRate}%</span>
                 </div>
-                <div className="w-full bg-dark-700 rounded-full h-2">
+                <div className="w-full h-2 rounded-full bg-dark-900 border border-dark-200 overflow-hidden" style={{ background: '#222a3c' }}>
                   <div
-                    className="bg-gradient-to-r from-success-400 to-success-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%` }}
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #2c7444, #4cc38a)' }}
                   />
                 </div>
               </div>
@@ -314,71 +386,75 @@ export default function Dashboard() {
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-display font-bold text-dark-900">Estado de Deudas</h3>
-            <Link to="/debts" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-              Ver todas →
+        <div className="card p-7 animate-slide-up" style={{ animationDelay: '240ms' }}>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="eyebrow">Pasivo</p>
+              <h3 className="mt-1 text-xl text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>Estado de deudas</h3>
+            </div>
+            <Link to="/debts" className="text-sm text-primary-500 hover:text-primary-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              ver todas →
             </Link>
           </div>
           {debtStatus?.debts?.length > 0 ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-dark-200">
               {debtStatus.debts.slice(0, 4).map((debt, index) => (
                 <Link
                   key={debt.id}
                   to={`/debts/${debt.id}`}
-                  className="flex items-center justify-between p-4 bg-dark-50 rounded-2xl hover:bg-dark-100 transition-colors"
+                  className="flex items-center justify-between py-3.5 hover:bg-dark-100 transition-colors rounded-lg px-2 -mx-2"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-                      <span className="text-primary-600 font-bold text-sm">#{index + 1}</span>
-                    </div>
+                    <span className="fig text-xs text-dark-400 w-6">{String(index + 1).padStart(2, '0')}</span>
                     <div>
-                      <p className="font-semibold text-dark-900">{debt.name}</p>
-                      <p className="text-xs text-dark-500">{debt.bank}</p>
+                      <p className="text-sm font-medium text-dark-800">{debt.name}</p>
+                      <p className="text-xs text-dark-500" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>{debt.bank}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-dark-900">{formatCurrency(debt.balance)}</p>
+                    <p className="fig text-sm font-semibold text-dark-800">{formatCurrency(debt.balance)}</p>
                     <p className="text-xs text-dark-500">{debt.remaining_months} meses</p>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <BanknotesIcon className="h-12 w-12 mx-auto text-dark-300 mb-3" />
-              <p className="text-dark-500">No hay deudas activas</p>
+            <div className="text-center py-10">
+              <BanknotesIcon className="h-10 w-10 mx-auto text-dark-500 mb-3" />
+              <p className="text-dark-400">No hay deudas activas</p>
             </div>
           )}
         </div>
 
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-display font-bold text-dark-900">Cuentas de Ahorro</h3>
-            <Link to="/savings" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-              Ver todas →
+        <div className="card p-7 animate-slide-up" style={{ animationDelay: '300ms' }}>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="eyebrow">Activo</p>
+              <h3 className="mt-1 text-xl text-dark-800" style={{ fontFamily: 'Fraunces, serif' }}>Cuentas de ahorro</h3>
+            </div>
+            <Link to="/savings" className="text-sm text-primary-500 hover:text-primary-400" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+              ver todas →
             </Link>
           </div>
           {savingsSummary?.accounts?.length > 0 ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-dark-200">
               {savingsSummary.accounts.slice(0, 4).map((account) => (
                 <Link
                   key={account.id}
                   to={`/savings/${account.id}`}
-                  className="flex items-center justify-between p-4 bg-dark-50 rounded-2xl hover:bg-dark-100 transition-colors"
+                  className="flex items-center justify-between py-3.5 hover:bg-dark-100 transition-colors rounded-lg px-2 -mx-2"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <WalletIcon className="h-5 w-5 text-purple-600" />
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center border border-dark-200" style={{ background: 'rgba(180,140,240,0.08)' }}>
+                      <WalletIcon className="h-4 w-4 text-purple-500" />
                     </div>
                     <div>
-                      <p className="font-semibold text-dark-900">{account.name}</p>
-                      <p className="text-xs text-dark-500">{account.bank}</p>
+                      <p className="text-sm font-medium text-dark-800">{account.name}</p>
+                      <p className="text-xs text-dark-500" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>{account.bank}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-dark-900">{formatCurrency(account.balance)}</p>
+                    <p className="fig text-sm font-semibold text-dark-800">{formatCurrency(account.balance)}</p>
                     {account.progress !== null && (
                       <p className="text-xs text-dark-500">{account.progress}% de meta</p>
                     )}
@@ -387,9 +463,9 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <WalletIcon className="h-12 w-12 mx-auto text-dark-300 mb-3" />
-              <p className="text-dark-500">No hay cuentas de ahorro</p>
+            <div className="text-center py-10">
+              <WalletIcon className="h-10 w-10 mx-auto text-dark-500 mb-3" />
+              <p className="text-dark-400">No hay cuentas de ahorro</p>
             </div>
           )}
         </div>

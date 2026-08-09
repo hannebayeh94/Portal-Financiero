@@ -6,7 +6,7 @@ import ClayToggle from '../components/ClayToggle'
 import PinPad from '../components/PinPad'
 import { dialog } from '../components/ConfirmDialog'
 import { useAppLock } from '../context/AppLockContext'
-import { setPin, clearLock, setBiometricEnabled, biometricAvailable, isPinSet, isBiometricEnabled } from '../utils/appLock'
+import { setPin, clearLock, setBiometricEnabled, biometricAvailable, isPinSet, isBiometricEnabled, isTrivialPin } from '../utils/appLock'
 import { clay, colors } from '../theme'
 
 export default function Security({ navigation }) {
@@ -59,6 +59,11 @@ export default function Security({ navigation }) {
     if (!setupVisible || pin.length !== 4) return
     (async () => {
       if (step === 'create') {
+        if (isTrivialPin(pin)) {
+          setError(true)
+          setTimeout(() => { setError(false); setPinValue('') }, 700)
+          return
+        }
         setFirstPin(pin)
         setPinValue('')
         setStep('confirm')
@@ -136,7 +141,9 @@ export default function Security({ navigation }) {
             {step === 'create' ? 'Crea tu PIN' : 'Confirma tu PIN'}
           </Text>
           <Text style={{ fontSize: 14, color: error ? colors.danger[500] : clay.textMuted, marginTop: 6, marginBottom: 30 }}>
-            {error ? 'Los PIN no coinciden' : 'Elige un PIN de 4 dígitos'}
+            {error
+              ? step === 'create' ? 'Elige un PIN más seguro (evita 0000, 1234 o repetidos)' : 'Los PIN no coinciden'
+              : 'Elige un PIN de 4 dígitos'}
           </Text>
           <PinPad value={pin} onChange={setPinValue} maxLength={4} error={error} />
         </View>

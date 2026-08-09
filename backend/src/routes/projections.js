@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { normalizeMonths } = require('../utils/validation');
 
 router.use(authenticateToken);
 
@@ -26,6 +27,10 @@ router.get('/', async (req, res) => {
 router.get('/generate', async (req, res) => {
   try {
     const { months = 12 } = req.query;
+    const totalMonths = normalizeMonths(months);
+    if (totalMonths === null) {
+      return res.status(400).json({ error: 'months debe ser un entero entre 1 y 120' });
+    }
 
     const incomeResult = await db('incomes')
       .where('user_id', req.user.id)
@@ -63,7 +68,7 @@ router.get('/generate', async (req, res) => {
       let projectedExpense = avgExpense;
       let projectedSavings = totalSavings;
 
-      for (let month = 1; month <= parseInt(months); month++) {
+      for (let month = 1; month <= totalMonths; month++) {
         projectedIncome *= rates.incomeGrowth;
         projectedExpense *= rates.expenseGrowth;
         const monthlySavings = projectedIncome - projectedExpense;

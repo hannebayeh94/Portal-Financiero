@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity, AppState } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import PinPad from '../components/PinPad'
 import GradientCard from '../components/GradientCard'
-import { verifyPin, authenticateBiometric, biometricAvailable } from '../utils/appLock'
+import { verifyPin, getLockoutDelayMs, authenticateBiometric, biometricAvailable } from '../utils/appLock'
 import { clay, colors, gradients, shadow } from '../theme'
 
 export default function LockScreen({ onUnlock, bioEnabled }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
+  const [lockoutMs, setLockoutMs] = useState(0)
   const [canBio, setCanBio] = useState(false)
   const busyRef = useRef(false)
 
@@ -56,12 +57,36 @@ export default function LockScreen({ onUnlock, bioEnabled }) {
         if (await verifyPin(pin)) {
           onUnlock()
         } else {
-          setError(true)
-          setTimeout(() => { setPin(''); setError(false) }, 600)
+          const delay = getLockoutDelayMs()
+          if (delay > 0) {
+            setPin('')
+            setLockoutMs(delay)
+          } else {
+            setError(true)
+            setTimeout(() => { setPin(''); setError(false) }, 600)
+          }
         }
       })()
     }
   }, [pin, onUnlock])
+
+  // Cuenta regresiva del bloqueo por intentos fallidos.
+  useEffect(() => {
+    if (lockoutMs <= 0) return
+    const interval = setInterval(() => {
+      setLockoutMs((ms) => {
+        if (ms <= 1000) {
+          clearInterval(interval)
+          return 0
+        }
+        return ms - 1000
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [lockoutMs > 0])
+
+  const locked = lockoutMs > 0
+  const lockSeconds = Math.ceil(lockoutMs / 1000)
 
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: clay.bg, zIndex: 9999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
@@ -69,11 +94,13 @@ export default function LockScreen({ onUnlock, bioEnabled }) {
         <Ionicons name="lock-closed" size={32} color="#fff" />
       </GradientCard>
       <Text style={{ fontSize: 22, fontWeight: '800', color: clay.text, letterSpacing: -0.3 }}>Portal Financiero</Text>
-      <Text style={{ fontSize: 14, color: error ? colors.danger[500] : clay.textMuted, marginTop: 6, marginBottom: 30 }}>
-        {error ? 'PIN incorrecto, intenta de nuevo' : 'Ingresa tu PIN para continuar'}
+      <Text style={{ fontSize: 14, color: error || locked ? colors.danger[500] : clay.textMuted, marginTop: 6, marginBottom: 30 }}>
+        {locked
+          ? `Demasiados intentos. Intenta de nuevo en ${lockSeconds}s`
+          : error ? 'PIN incorrecto, intenta de nuevo' : 'Ingresa tu PIN para continuar'}
       </Text>
 
-      <PinPad value={pin} onChange={setPin} maxLength={4} error={error} />
+      <PinPad value={pin} onChange={(v) => { if (!locked) setPin(v) }} maxLength={4} error={error} />
 
       {bioEnabled && canBio && (
         <TouchableOpacity onPress={tryBiometric} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 28, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 14, backgroundColor: clay.card, borderWidth: 1, borderColor: clay.border, ...shadow.sm }}>

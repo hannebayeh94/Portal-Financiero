@@ -319,12 +319,12 @@ export default function DebtPayoff() {
       {
         label: 'Saldo Pendiente',
         data: rows.filter((_, i) => i % 2 === 0 || i === rows.length - 1).map(r => r.finalBalance),
-        borderColor: '#d4a574',
-        backgroundColor: 'rgba(212, 165, 116, 0.15)',
+        borderColor: '#e2b153',
+        backgroundColor: 'rgba(226, 177, 83, 0.15)',
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#d4a574',
-        pointBorderColor: '#f5ebe0',
+        pointBackgroundColor: '#e2b153',
+        pointBorderColor: '#11151e',
         pointBorderWidth: 3,
         pointRadius: 4,
         pointHoverRadius: 6,
@@ -338,13 +338,13 @@ export default function DebtPayoff() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#f5ebe0',
-        titleColor: '#2d3436',
-        bodyColor: '#2d3436',
-        borderColor: '#d4c4b4',
+        backgroundColor: '#1b2130',
+        titleColor: '#eceee6',
+        bodyColor: '#a6b0c2',
+        borderColor: '#2c3650',
         borderWidth: 1,
         padding: 12,
-        cornerRadius: 12,
+        cornerRadius: 10,
         callbacks: {
           label: (ctx) => `Saldo: ${formatCurrency(ctx.raw)}`,
         },
@@ -353,13 +353,13 @@ export default function DebtPayoff() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#8a7a6a', font: { size: 10, family: 'Inter' }, maxRotation: 45 },
+        ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45 },
       },
       y: {
-        grid: { color: 'rgba(212, 196, 180, 0.3)' },
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
-          color: '#8a7a6a',
-          font: { size: 11, family: 'Inter' },
+          color: '#8b95a8',
+          font: { size: 11, family: '"IBM Plex Mono", monospace' },
           callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
@@ -483,7 +483,7 @@ export default function DebtPayoff() {
           {/* Debt Form */}
           <div className="clay-card p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #d4a574, #c49464)', boxShadow: 'var(--clay-shadow-sm)' }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e2b153, #b3872f)', boxShadow: 'var(--clay-shadow-sm)' }}>
                 <BanknotesIcon className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -650,7 +650,7 @@ export default function DebtPayoff() {
           {/* Empty State */}
           {rows.length === 0 && (
             <div className="clay-card p-12 text-center">
-              <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4" style={{ background: '#e8ddd0', boxShadow: 'var(--clay-shadow-inset)' }}>
+              <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4" style={{ background: '#1b2130', boxShadow: 'var(--clay-shadow-inset)' }}>
                 <BanknotesIcon className="h-10 w-10" style={{ color: 'var(--clay-text-muted)' }} />
               </div>
               <h3 className="text-xl font-display font-bold mb-2" style={{ color: 'var(--clay-text)' }}>Calcula tu plan de pago</h3>
@@ -693,7 +693,7 @@ export default function DebtPayoff() {
                         </td>
                         <td style={{ color: 'var(--clay-text)' }}>{formatCurrency(row.initialBalance)}</td>
                         <td style={{ color: 'var(--clay-red)' }}>{formatCurrency(row.interest)}</td>
-                        <td style={{ color: 'var(--clay-green)' }}>{formatCurrency(Math.max(0, row.capital - row.interest))}</td>
+                        <td style={{ color: 'var(--clay-green)' }}>{formatCurrency(Math.max(0, row.capital))}</td>
                         <td style={{ color: 'var(--clay-accent)' }}>
                           {row.extraPayment > 0 ? formatCurrency(row.extraPayment) : '-'}
                         </td>
@@ -718,7 +718,7 @@ export default function DebtPayoff() {
       {showSaveModal && (
         <div className="modal-overlay" onClick={() => setShowSaveModal(false)}>
           <div className="modal-content animate-scale-in max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Guardar escenario</h3>
             </div>
             <div className="p-5 space-y-4">
@@ -767,7 +767,7 @@ export default function DebtPayoff() {
       {showLoadModal && (
         <div className="modal-overlay" onClick={() => setShowLoadModal(false)}>
           <div className="modal-content animate-scale-in max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: '#2c3650' }}>
               <h3 className="text-lg font-display font-bold" style={{ color: 'var(--clay-text)' }}>Mis escenarios</h3>
               <div className="flex items-center gap-2">
                 <input
@@ -793,7 +793,7 @@ export default function DebtPayoff() {
                     <div
                       key={sc.id}
                       className="flex items-center justify-between p-3  transition-all cursor-pointer hover:bg-black/5"
-                      style={{ background: '#e8ddd0' }}
+                      style={{ background: '#1b2130' }}
                       onClick={() => handleLoad(sc)}
                     >
                       <div className="flex-1 min-w-0">
@@ -802,8 +802,8 @@ export default function DebtPayoff() {
                           <span className={`clay-badge text-2xs px-2 py-0.5 ${sc.status === 'permanent' ? '' : ''}`}
                             style={{
                               background: sc.status === 'permanent'
-                                ? 'linear-gradient(145deg, #d4a574, #c49464)'
-                                : '#e0d4c8',
+                                ? 'linear-gradient(145deg, #e2b153, #b3872f)'
+                                : '#2c3650',
                               color: sc.status === 'permanent' ? '#fff' : 'var(--clay-text-muted)',
                               fontSize: '0.6rem',
                             }}
@@ -836,7 +836,7 @@ export default function DebtPayoff() {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#d4c4b4' }}>
+            <div className="p-4 border-t flex justify-end" style={{ borderColor: '#2c3650' }}>
               <button onClick={() => setShowLoadModal(false)} className="clay-btn px-4 py-2 text-sm">Cerrar</button>
             </div>
           </div>

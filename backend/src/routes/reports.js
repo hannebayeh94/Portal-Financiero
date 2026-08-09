@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
+const { normalizeMonths } = require('../utils/validation');
 
 router.use(authenticateToken);
 
@@ -174,6 +175,10 @@ router.get('/savings-status', async (req, res) => {
 router.get('/interest-projection', async (req, res) => {
   try {
     const { months = 12 } = req.query;
+    const totalMonths = normalizeMonths(months);
+    if (totalMonths === null) {
+      return res.status(400).json({ error: 'months debe ser un entero entre 1 y 120' });
+    }
 
     const debts = await db('debts')
       .where({ user_id: req.user.id, status: 'active' });
@@ -186,7 +191,7 @@ router.get('/interest-projection', async (req, res) => {
       let balance = parseFloat(debt.current_balance);
       const projections = [];
 
-      for (let month = 1; month <= Math.min(parseInt(months), debt.remaining_months); month++) {
+      for (let month = 1; month <= Math.min(totalMonths, debt.remaining_months); month++) {
         const interest = balance * monthlyRate;
         const capital = parseFloat(debt.monthly_payment) - interest;
         balance = Math.max(0, balance - capital);
@@ -211,7 +216,7 @@ router.get('/interest-projection', async (req, res) => {
       let balance = parseFloat(account.current_balance);
       const projections = [];
 
-      for (let month = 1; month <= parseInt(months); month++) {
+      for (let month = 1; month <= totalMonths; month++) {
         const interest = balance * monthlyRate;
         balance += interest;
 
