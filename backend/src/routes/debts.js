@@ -288,10 +288,29 @@ router.put('/:id', async (req, res) => {
       bank_or_lender, status, payment_day, cut_day
     } = req.body;
 
+    const existing = await db('debts')
+      .where({ id, user_id: req.user.id })
+      .first();
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Deuda no encontrada' });
+    }
+
+    // Si cambia el monto total y no se envía un saldo actual explícito, se ajusta
+    // el saldo por la misma diferencia (total − pagado) para que el valor editado
+    // se propague a todas las vistas (saldo, progreso, dashboard, simulador).
+    let balanceToSave = current_balance;
+    if (current_balance === undefined && total_amount !== undefined) {
+      const oldTotal = parseFloat(existing.total_amount) || 0;
+      const newTotal = parseFloat(total_amount) || 0;
+      const delta = newTotal - oldTotal;
+      balanceToSave = Math.max(0, (parseFloat(existing.current_balance) || 0) + delta);
+    }
+
     const [debt] = await db('debts')
       .where({ id, user_id: req.user.id })
       .update({
-        name, total_amount, current_balance, interest_rate,
+        name, total_amount, current_balance: balanceToSave, interest_rate,
         interest_type, monthly_payment, term_months,
         remaining_months, start_date, end_date,
         bank_or_lender, status, payment_day: payment_day || null,
@@ -299,10 +318,6 @@ router.put('/:id', async (req, res) => {
         updated_at: db.fn.now()
       })
       .returning('*');
-
-    if (!debt) {
-      return res.status(404).json({ error: 'Deuda no encontrada' });
-    }
 
     res.json(debt);
   } catch (error) {
