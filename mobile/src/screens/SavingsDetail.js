@@ -1,8 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
-import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
@@ -10,6 +8,7 @@ import ClayToggle from '../components/ClayToggle'
 import ClayDatePicker from '../components/ClayDatePicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import { useSavingsDetail } from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDate } from '../utils/formatters'
 
@@ -30,24 +29,23 @@ const emptyTx = () => ({ amount: '', type: 'deposit', date: new Date().toISOStri
 export default function SavingsDetail({ route, navigation }) {
   const { id } = route.params
   const kb = useKeyboardHeight()
-  const [account, setAccount] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showTxModal, setShowTxModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [txData, setTxData] = useState(emptyTx())
   const [showEditModal, setShowEditModal] = useState(false)
   const [editData, setEditData] = useState(null)
 
-  const fetchAccount = async () => {
-    try {
-      const res = await api.get(`/savings/${id}`)
-      setAccount(res.data)
-    } catch (e) {
-      dialog.alert('Error', 'Error al cargar la cuenta'); navigation.goBack()
-    } finally { setLoading(false) }
-  }
-
-  useFocusEffect(useCallback(() => { fetchAccount() }, [id]))
+  const {
+    account,
+    loading,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    updateAccount,
+    removeAccount,
+  } = useSavingsDetail(id)
+  const saving =
+    addTransaction.isPending || updateTransaction.isPending
 
   const openNewTx = () => { setEditingTx(null); setTxData(emptyTx()); setShowTxModal(true) }
 
@@ -62,9 +60,9 @@ export default function SavingsDetail({ route, navigation }) {
     const payload = { ...txData, amount: parseFloat(txData.amount) }
     try {
       editingTx
-        ? await api.put(`/savings/${id}/transactions/${editingTx.id}`, payload)
-        : await api.post(`/savings/${id}/transactions`, payload)
-      setShowTxModal(false); setEditingTx(null); setTxData(emptyTx()); fetchAccount()
+        ? await updateTransaction.mutateAsync({ transactionId: editingTx.id, payload })
+        : await addTransaction.mutateAsync(payload)
+      setShowTxModal(false); setEditingTx(null); setTxData(emptyTx())
     } catch (e) { dialog.alert('Error', 'Error al guardar el movimiento') }
   }
 
@@ -75,7 +73,7 @@ export default function SavingsDetail({ route, navigation }) {
       confirmLabel: 'Eliminar',
       destructive: true,
       onConfirm: async () => {
-        try { await api.delete(`/savings/${id}/transactions/${txId}`); fetchAccount() }
+        try { await deleteTransaction.mutateAsync(txId) }
         catch (e) { dialog.alert('Error', 'Error al eliminar') }
       },
     })
@@ -102,8 +100,8 @@ export default function SavingsDetail({ route, navigation }) {
       interest_rate: editData.interest_rate === '' ? 0 : parseFloat(editData.interest_rate),
     }
     try {
-      await api.put(`/savings/${id}`, payload)
-      setShowEditModal(false); fetchAccount()
+      await updateAccount.mutateAsync(payload)
+      setShowEditModal(false)
     } catch (e) { dialog.alert('Error', 'Error al actualizar la cuenta') }
   }
 
@@ -114,7 +112,7 @@ export default function SavingsDetail({ route, navigation }) {
       confirmLabel: 'Eliminar',
       destructive: true,
       onConfirm: async () => {
-        try { await api.delete(`/savings/${id}`); navigation.goBack() }
+        try { await removeAccount.mutateAsync(); navigation.goBack() }
         catch (e) { dialog.alert('Error', 'Error al eliminar la cuenta') }
       },
     })

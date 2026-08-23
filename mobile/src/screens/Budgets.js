@@ -1,14 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
-import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import CategoryPicker from '../components/CategoryPicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useBudgets,
+  useCategories,
+  useSaveBudget,
+  useDeleteBudget,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -17,28 +21,17 @@ const now = new Date()
 
 export default function Budgets({ navigation }) {
   const kb = useKeyboardHeight()
-  const [budgets, setBudgets] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ category_id: null, amount: '' })
 
-  const fetchBudgets = async () => {
-    try {
-      const res = await api.get('/budgets', { params: { month, year } })
-      setBudgets(res.data.budgets || [])
-    } catch (e) {} finally { setLoading(false) }
-  }
-  const fetchCategories = async () => {
-    try { const res = await api.get('/categories', { params: { type: 'expense' } }); setCategories(res.data) }
-    catch (e) {}
-  }
-
-  useEffect(() => { fetchBudgets() }, [month, year])
-  useFocusEffect(useCallback(() => { fetchCategories() }, []))
+  const { data, isLoading: loading } = useBudgets(month, year)
+  const budgets = data?.budgets || []
+  const { data: categories = [] } = useCategories('expense')
+  const saveMutation = useSaveBudget(month, year)
+  const deleteMutation = useDeleteBudget()
 
   const usedIds = new Set(budgets.map(b => b.category_id))
   const available = categories.filter(c => !usedIds.has(c.id))
@@ -50,11 +43,14 @@ export default function Budgets({ navigation }) {
     if (!form.amount || form.category_id == null) { dialog.alert('Error', 'Elige categoría y monto'); return }
     try {
       if (editing) {
-        await api.put(`/budgets/${editing.id}`, { amount: form.amount })
+        await saveMutation.mutateAsync({ id: editing.id, payload: { amount: form.amount } })
       } else {
-        await api.post('/budgets', { category_id: form.category_id, amount: form.amount, month, year })
+        await saveMutation.mutateAsync({
+          id: null,
+          payload: { category_id: form.category_id, amount: form.amount, month, year },
+        })
       }
-      setShowModal(false); setEditing(null); fetchBudgets()
+      setShowModal(false); setEditing(null)
     } catch (e) {
       dialog.alert('Error', e.response?.data?.error || 'No se pudo guardar el presupuesto')
     }
@@ -65,7 +61,10 @@ export default function Budgets({ navigation }) {
       title: 'Eliminar presupuesto',
       message: `¿Eliminar el presupuesto de "${b.category_name}"?`,
       confirmLabel: 'Eliminar', destructive: true,
-      onConfirm: async () => { try { await api.delete(`/budgets/${b.id}`); fetchBudgets() } catch { dialog.alert('Error', 'No se pudo eliminar') } },
+      onConfirm: async () => {
+        try { await deleteMutation.mutateAsync(b.id) }
+        catch { dialog.alert('Error', 'No se pudo eliminar') }
+      },
     })
   }
 

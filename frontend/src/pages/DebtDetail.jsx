@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Chart as ChartJS,
@@ -13,20 +13,20 @@ import {
   Filler,
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
-import api from '../services/api'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  useDebtDetail,
+  useUpdateDebt,
+  useDeleteDebtById,
+} from '../hooks/useDebtDetail'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler)
 
 export default function DebtDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [debt, setDebt] = useState(null)
-  const [projection, setProjection] = useState(null)
-  const [cyclesData, setCyclesData] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showChargeModal, setShowChargeModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -61,36 +61,26 @@ export default function DebtDetail() {
     status: 'active',
   })
 
-  useEffect(() => {
-    fetchDebtData()
-  }, [id])
-
-  const fetchDebtData = async () => {
-    try {
-      const [debtRes, projectionRes, cyclesRes] = await Promise.all([
-        api.get(`/debts/${id}`),
-        api.get(`/debts/${id}/projection`),
-        api.get(`/debts/${id}/cycles`),
-      ])
-      setDebt(debtRes.data)
-      setProjection(projectionRes.data)
-      setCyclesData(cyclesRes.data)
-    } catch (error) {
-      toast.error('Error al cargar datos de la deuda')
-      navigate('/debts')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    debt,
+    projection,
+    cyclesData,
+    loading,
+    addPayment,
+    updatePayment,
+    deletePayment,
+    addCharge,
+  } = useDebtDetail(id)
+  const updateMutation = useUpdateDebt(id)
+  const deleteMutation = useDeleteDebtById()
 
   const handlePayment = async (e) => {
     e.preventDefault()
     try {
-      await api.post(`/debts/${id}/payments`, paymentData)
+      await addPayment.mutateAsync(paymentData)
       toast.success('Pago registrado')
       setShowPaymentModal(false)
       setPaymentData({ amount: '', payment_date: new Date().toISOString().split('T')[0] })
-      fetchDebtData()
     } catch (error) {
       toast.error('Error al registrar pago')
     }
@@ -99,11 +89,10 @@ export default function DebtDetail() {
   const handleCharge = async (e) => {
     e.preventDefault()
     try {
-      await api.post(`/debts/${id}/charges`, chargeData)
+      await addCharge.mutateAsync(chargeData)
       toast.success('Consumo registrado')
       setShowChargeModal(false)
       setChargeData({ amount: '', payment_date: new Date().toISOString().split('T')[0], description: '' })
-      fetchDebtData()
     } catch (error) {
       toast.error('Error al registrar consumo')
     }
@@ -131,10 +120,9 @@ export default function DebtDetail() {
   const handleUpdate = async (e) => {
     e.preventDefault()
     try {
-      await api.put(`/debts/${id}`, editData)
+      await updateMutation.mutateAsync(editData)
       toast.success('Deuda actualizada')
       setShowEditModal(false)
-      fetchDebtData()
     } catch (error) {
       toast.error('Error al actualizar deuda')
     }
@@ -143,7 +131,7 @@ export default function DebtDetail() {
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar esta deuda?')) return
     try {
-      await api.delete(`/debts/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Deuda eliminada')
       navigate('/debts')
     } catch (error) {
@@ -163,11 +151,10 @@ export default function DebtDetail() {
   const handleUpdatePayment = async (e) => {
     e.preventDefault()
     try {
-      await api.put(`/debts/${id}/payments/${editingPayment.id}`, editPaymentData)
+      await updatePayment.mutateAsync({ paymentId: editingPayment.id, payload: editPaymentData })
       toast.success('Pago actualizado')
       setShowEditPaymentModal(false)
       setEditingPayment(null)
-      fetchDebtData()
     } catch (error) {
       toast.error('Error al actualizar pago')
     }
@@ -176,9 +163,8 @@ export default function DebtDetail() {
   const handleDeletePayment = async (paymentId) => {
     if (!confirm('¿Estás seguro de eliminar este pago?')) return
     try {
-      await api.delete(`/debts/${id}/payments/${paymentId}`)
+      await deletePayment.mutateAsync(paymentId)
       toast.success('Pago eliminado')
-      fetchDebtData()
     } catch (error) {
       toast.error('Error al eliminar pago')
     }

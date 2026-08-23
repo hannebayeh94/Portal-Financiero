@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,9 +12,8 @@ import {
   ArcElement,
 } from 'chart.js'
 import { Line, Bar, Doughnut } from 'react-chartjs-2'
-import api from '../services/api'
 import { formatCurrency, getMonthName, getCurrentYear } from '../utils/formatters'
-import toast from 'react-hot-toast'
+import { useReportsData } from '../hooks/useFinanceQueries'
 import { DocumentChartBarIcon } from '@heroicons/react/24/outline'
 
 ChartJS.register(
@@ -31,39 +30,16 @@ ChartJS.register(
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState('cashflow')
-  const [loading, setLoading] = useState(true)
-  const [cashFlow, setCashFlow] = useState(null)
-  const [monthlyEvolution, setMonthlyEvolution] = useState(null)
-  const [debtStatus, setDebtStatus] = useState(null)
-  const [savingsStatus, setSavingsStatus] = useState(null)
-  const [interestProjection, setInterestProjection] = useState(null)
   const [year, setYear] = useState(getCurrentYear())
 
-  useEffect(() => {
-    fetchAllData()
-  }, [year])
-
-  const fetchAllData = async () => {
-    setLoading(true)
-    try {
-      const [cashFlowRes, evolutionRes, debtsRes, savingsRes, interestRes] = await Promise.all([
-        api.get('/reports/cash-flow'),
-        api.get(`/reports/monthly-evolution?year=${year}`),
-        api.get('/reports/debt-status'),
-        api.get('/reports/savings-status'),
-        api.get('/reports/interest-projection?months=12'),
-      ])
-      setCashFlow(cashFlowRes.data)
-      setMonthlyEvolution(evolutionRes.data)
-      setDebtStatus(debtsRes.data)
-      setSavingsStatus(savingsRes.data)
-      setInterestProjection(interestRes.data)
-    } catch (error) {
-      toast.error('Error al cargar reportes')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    loading,
+    cashFlow,
+    monthlyEvolution,
+    debtStatus,
+    savingsStatus,
+    interestProjection,
+  } = useReportsData(year)
 
   if (loading) {
     return (

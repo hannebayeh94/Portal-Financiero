@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.1.1",
+    "@tanstack/query-sync-storage-persister": "^5.102.2",
+    "@tanstack/react-query": "^5.102.1",
+    "@tanstack/react-query-persist-client": "^5.102.2",
     "axios": "^1.6.2",
     "chart.js": "^4.4.1",
     "date-fns": "^2.30.0",

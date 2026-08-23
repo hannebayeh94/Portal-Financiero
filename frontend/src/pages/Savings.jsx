@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../services/api'
 import { formatCurrency } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, WalletIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import {
+  useSavings,
+  useSavingsSummary,
+  useSaveSavings,
+  useDeleteSavings,
+} from '../hooks/useFinanceQueries'
 
 export default function Savings() {
-  const [savings, setSavings] = useState([])
-  const [summary, setSummary] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingAccount, setEditingAccount] = useState(null)
   const [formData, setFormData] = useState({
@@ -21,39 +23,19 @@ export default function Savings() {
     start_date: new Date().toISOString().split('T')[0],
   })
 
-  useEffect(() => {
-    fetchSavings()
-  }, [])
-
-  const fetchSavings = async () => {
-    try {
-      const [savingsRes, summaryRes] = await Promise.all([
-        api.get('/savings'),
-        api.get('/savings/summary'),
-      ])
-      setSavings(savingsRes.data)
-      setSummary(summaryRes.data)
-    } catch (error) {
-      toast.error('Error al cargar ahorros')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: savings = [], isLoading: loading } = useSavings()
+  const { data: summary } = useSavingsSummary()
+  const saveMutation = useSaveSavings()
+  const deleteMutation = useDeleteSavings()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      if (editingAccount) {
-        await api.put(`/savings/${editingAccount.id}`, formData)
-        toast.success('Cuenta actualizada')
-      } else {
-        await api.post('/savings', formData)
-        toast.success('Cuenta de ahorro creada')
-      }
+      await saveMutation.mutateAsync({ id: editingAccount?.id, payload: formData })
+      toast.success(editingAccount ? 'Cuenta actualizada' : 'Cuenta de ahorro creada')
       setShowModal(false)
       setEditingAccount(null)
       resetForm()
-      fetchSavings()
     } catch (error) {
       toast.error(editingAccount ? 'Error al actualizar cuenta' : 'Error al crear cuenta')
     }
@@ -80,9 +62,8 @@ export default function Savings() {
     e.stopPropagation()
     if (!confirm('¿Estás seguro de eliminar esta cuenta de ahorro?')) return
     try {
-      await api.delete(`/savings/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Cuenta eliminada')
-      fetchSavings()
     } catch (error) {
       toast.error('Error al eliminar cuenta')
     }

@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../services/api'
 import { formatCurrency } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, BanknotesIcon, PencilIcon, TrashIcon, CalculatorIcon } from '@heroicons/react/24/outline'
+import {
+  useDebts,
+  useSaveDebt,
+  useDeleteDebt,
+} from '../hooks/useFinanceQueries'
 
 export default function Debts() {
-  const [debts, setDebts] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingDebt, setEditingDebt] = useState(null)
   const [formData, setFormData] = useState({
@@ -25,35 +27,18 @@ export default function Debts() {
     status: 'active',
   })
 
-  useEffect(() => {
-    fetchDebts()
-  }, [])
-
-  const fetchDebts = async () => {
-    try {
-      const res = await api.get('/debts')
-      setDebts(res.data)
-    } catch (error) {
-      toast.error('Error al cargar deudas')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: debts = [], isLoading: loading } = useDebts()
+  const saveMutation = useSaveDebt()
+  const deleteMutation = useDeleteDebt()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      if (editingDebt) {
-        await api.put(`/debts/${editingDebt.id}`, formData)
-        toast.success('Deuda actualizada')
-      } else {
-        await api.post('/debts', formData)
-        toast.success('Deuda creada')
-      }
+      await saveMutation.mutateAsync({ id: editingDebt?.id, payload: formData })
+      toast.success(editingDebt ? 'Deuda actualizada' : 'Deuda creada')
       setShowModal(false)
       setEditingDebt(null)
       resetForm()
-      fetchDebts()
     } catch (error) {
       toast.error(editingDebt ? 'Error al actualizar deuda' : 'Error al crear deuda')
     }
@@ -85,9 +70,8 @@ export default function Debts() {
     e.stopPropagation()
     if (!confirm('¿Estás seguro de eliminar esta deuda?')) return
     try {
-      await api.delete(`/debts/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Deuda eliminada')
-      fetchDebts()
     } catch (error) {
       toast.error('Error al eliminar deuda')
     }

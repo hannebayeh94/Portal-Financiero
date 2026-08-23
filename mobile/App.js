@@ -1,5 +1,13 @@
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, View, Text } from 'react-native'
+import { QueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useFonts } from 'expo-font'
+import { BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque'
+import { InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold, InstrumentSans_700Bold } from '@expo-google-fonts/instrument-sans'
+import { SplineSansMono_400Regular, SplineSansMono_500Medium, SplineSansMono_600SemiBold } from '@expo-google-fonts/spline-sans-mono'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -35,6 +43,21 @@ import AutoExpenseModal from './src/components/AutoExpenseModal'
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
 const MoreStack = createNativeStackNavigator()
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: DAY_MS,
+      retry: 1,
+    },
+  },
+})
+
+// Offline-first: la caché sobrevive reinicios de la app (crítico con cold starts de Render)
+const persister = createAsyncStoragePersister({ storage: AsyncStorage })
 
 const tabConfig = [
   { name: 'Dashboard', label: 'Inicio', icon: 'grid-outline', activeIcon: 'grid' },
@@ -128,13 +151,38 @@ function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      {user ? <MainTabs /> : <AuthStack />}
-    </NavigationContainer>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: DAY_MS }}
+    >
+      <NavigationContainer>
+        {user ? <MainTabs /> : <AuthStack />}
+      </NavigationContainer>
+    </PersistQueryClientProvider>
   )
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
+    SplineSansMono_400Regular,
+    SplineSansMono_500Medium,
+    SplineSansMono_600SemiBold,
+  })
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: clay.bg }}>
+        <ActivityIndicator size="large" color={colors.primary[500]} />
+      </View>
+    )
+  }
+
   return (
     <SafeAreaProvider>
       <AuthProvider>

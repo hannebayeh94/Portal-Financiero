@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
@@ -10,6 +9,12 @@ import ClayDatePicker from '../components/ClayDatePicker'
 import CategoryPicker from '../components/CategoryPicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useExpenses,
+  useCategories,
+  useSaveExpense,
+  useDeleteExpense,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
@@ -19,9 +24,6 @@ const currentYear = new Date().getFullYear()
 export default function Expenses() {
   const now = new Date()
   const kb = useKeyboardHeight()
-  const [expenses, setExpenses] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
@@ -31,21 +33,10 @@ export default function Expenses() {
     type: 'variable', recurring: false, recurrence_type: 'monthly', apply_four_per_thousand: false,
   })
 
-  const fetchExpenses = async () => {
-    try {
-      const res = await api.get('/expenses', { params: { month: selectedMonth, year: selectedYear } })
-      setExpenses(res.data)
-    } catch (e) {
-    } finally { setLoading(false) }
-  }
-
-  const fetchCategories = async () => {
-    try { const res = await api.get('/categories', { params: { type: 'expense' } }); setCategories(res.data) }
-    catch (e) {}
-  }
-
-  useEffect(() => { fetchExpenses() }, [selectedMonth, selectedYear])
-  useEffect(() => { fetchCategories() }, [])
+  const { data: expenses = [], isLoading: loading } = useExpenses(selectedMonth, selectedYear)
+  const { data: categories = [] } = useCategories('expense')
+  const saveMutation = useSaveExpense()
+  const deleteMutation = useDeleteExpense()
 
   const resetForm = () => setFormData({
     amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null,
@@ -55,8 +46,8 @@ export default function Expenses() {
   const handleSubmit = async () => {
     if (!formData.amount || !formData.description) { dialog.alert('Error', 'Completa los campos requeridos'); return }
     try {
-      editing ? await api.put(`/expenses/${editing.id}`, formData) : await api.post('/expenses', formData)
-      setShowModal(false); setEditing(null); resetForm(); fetchExpenses()
+      await saveMutation.mutateAsync({ id: editing?.id, payload: formData })
+      setShowModal(false); setEditing(null); resetForm()
     } catch (e) { dialog.alert('Error', 'Error al guardar egreso') }
   }
 
@@ -76,7 +67,13 @@ export default function Expenses() {
       message: '¿Seguro que quieres eliminar este egreso?',
       confirmLabel: 'Eliminar',
       destructive: true,
-      onConfirm: async () => { await api.delete(`/expenses/${id}`); fetchExpenses() },
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(id)
+        } catch (e) {
+          dialog.alert('Error', 'No se pudo eliminar el egreso')
+        }
+      },
     })
   }
 

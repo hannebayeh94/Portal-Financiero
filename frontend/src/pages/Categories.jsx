@@ -1,43 +1,31 @@
-import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, TagIcon } from '@heroicons/react/24/outline'
+import {
+  useAllCategories,
+  useSaveCategory,
+  useDeleteCategory,
+} from '../hooks/useFinanceQueries'
 
 const PALETTE = ['#F43F5E', '#F59E0B', '#6D54E8', '#0EA5E9', '#22C55E', '#A855F7', '#3B82F6', '#8A90A6', '#16A34A', '#9333EA']
 
 export default function Categories() {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [formData, setFormData] = useState({ name: '', type: 'expense', color: PALETTE[0] })
 
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/categories')
-      setCategories(res.data)
-    } catch (error) {
-      toast.error('Error al cargar categorías')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchCategories() }, [])
+  const { data: categories = [], isLoading: loading } = useAllCategories()
+  const saveMutation = useSaveCategory()
+  const deleteMutation = useDeleteCategory()
 
   const resetForm = () => setFormData({ name: '', type: 'expense', color: PALETTE[0] })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      if (editing) {
-        await api.put(`/categories/${editing.id}`, formData)
-        toast.success('Categoría actualizada')
-      } else {
-        await api.post('/categories', formData)
-        toast.success('Categoría creada')
-      }
-      setShowModal(false); setEditing(null); resetForm(); fetchCategories()
+      await saveMutation.mutateAsync({ id: editing?.id, payload: formData })
+      toast.success(editing ? 'Categoría actualizada' : 'Categoría creada')
+      setShowModal(false); setEditing(null); resetForm()
     } catch (error) {
       toast.error('Error al guardar categoría')
     }
@@ -52,9 +40,8 @@ export default function Categories() {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta categoría? Los movimientos asociados quedarán sin categoría.')) return
     try {
-      await api.delete(`/categories/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Categoría eliminada')
-      fetchCategories()
     } catch (error) {
       toast.error('Error al eliminar categoría')
     }

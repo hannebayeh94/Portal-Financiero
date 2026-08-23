@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
@@ -10,36 +9,33 @@ import ClayDatePicker from '../components/ClayDatePicker'
 import CategoryPicker from '../components/CategoryPicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useIncomes,
+  useCategories,
+  useSaveIncome,
+  useDeleteIncome,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDateShort } from '../utils/formatters'
 
 export default function Incomes() {
   const now = new Date()
   const kb = useKeyboardHeight()
-  const [incomes, setIncomes] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [formData, setFormData] = useState({ amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null, source: 'salary', recurring: false, recurrence_type: 'monthly' })
 
-  const fetch = async () => {
-    try { const res = await api.get('/incomes'); setIncomes(res.data) }
-    catch (e) {} finally { setLoading(false) }
-  }
-  const fetchCategories = async () => {
-    try { const res = await api.get('/categories', { params: { type: 'income' } }); setCategories(res.data) }
-    catch (e) {}
-  }
-  useEffect(() => { fetch() }, [])
-  useEffect(() => { fetchCategories() }, [])
+  const { data: incomes = [], isLoading: loading } = useIncomes()
+  const { data: categories = [] } = useCategories('income')
+  const saveMutation = useSaveIncome()
+  const deleteMutation = useDeleteIncome()
 
   const resetForm = () => setFormData({ amount: '', description: '', date: new Date().toISOString().split('T')[0], category_id: null, source: 'salary', recurring: false, recurrence_type: 'monthly' })
   const handleSubmit = async () => {
     if (!formData.amount || !formData.description) { dialog.alert('Error', 'Completa los campos'); return }
     try {
-      editing ? await api.put(`/incomes/${editing.id}`, formData) : await api.post('/incomes', formData)
-      setShowModal(false); setEditing(null); resetForm(); fetch()
+      await saveMutation.mutateAsync({ id: editing?.id, payload: formData })
+      setShowModal(false); setEditing(null); resetForm()
     } catch (e) { dialog.alert('Error', 'Error al guardar') }
   }
   const handleEdit = (inc) => {
@@ -53,7 +49,13 @@ export default function Incomes() {
       message: '¿Seguro que quieres eliminar este ingreso?',
       confirmLabel: 'Eliminar',
       destructive: true,
-      onConfirm: async () => { await api.delete(`/incomes/${id}`); fetch() },
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(id)
+        } catch (e) {
+          dialog.alert('Error', 'No se pudo eliminar el ingreso')
+        }
+      },
     })
   }
 

@@ -2,6 +2,10 @@
   "name": "portal-financiero",
   "version": "1.0.0",
   "description": "Portal web integral de administración financiera",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",

@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { useState } from 'react'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline'
 import ClayToggle from '../components/ClayToggle'
+import {
+  useIncomes,
+  useCategories,
+  useSaveIncome,
+  useDeleteIncome,
+} from '../hooks/useFinanceQueries'
 
 const sources = [
   { value: 'salary', label: 'Salario' },
@@ -19,9 +24,6 @@ const MONTHS = [
 
 export default function Incomes() {
   const now = new Date()
-  const [incomes, setIncomes] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingIncome, setEditingIncome] = useState(null)
   const [formData, setFormData] = useState({
@@ -36,47 +38,20 @@ export default function Incomes() {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
 
-  const fetchIncomes = async () => {
-    try {
-      const res = await api.get('/incomes', { params: { month: selectedMonth, year: selectedYear } })
-      setIncomes(res.data)
-    } catch (error) {
-      toast.error('Error al cargar ingresos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/categories', { params: { type: 'income' } })
-      setCategories(res.data)
-    } catch (error) { /* silencioso */ }
-  }
-
-  useEffect(() => {
-    fetchIncomes()
-  }, [selectedMonth, selectedYear])
-
-  useEffect(() => {
-    fetchCategories()
-  }, [])
+  const { data: incomes = [], isLoading: loading } = useIncomes(selectedMonth, selectedYear)
+  const { data: categories = [] } = useCategories('income')
+  const saveMutation = useSaveIncome()
+  const deleteMutation = useDeleteIncome()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     const payload = { ...formData, category_id: formData.category_id || null }
     try {
-      if (editingIncome) {
-        await api.put(`/incomes/${editingIncome.id}`, payload)
-        toast.success('Ingreso actualizado')
-      } else {
-        await api.post('/incomes', payload)
-        toast.success('Ingreso creado')
-      }
+      await saveMutation.mutateAsync({ id: editingIncome?.id, payload })
+      toast.success(editingIncome ? 'Ingreso actualizado' : 'Ingreso creado')
       setShowModal(false)
       setEditingIncome(null)
       resetForm()
-      fetchIncomes()
     } catch (error) {
       toast.error('Error al guardar ingreso')
     }
@@ -99,9 +74,8 @@ export default function Incomes() {
   const handleDelete = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este ingreso?')) return
     try {
-      await api.delete(`/incomes/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Ingreso eliminado')
-      fetchIncomes()
     } catch (error) {
       toast.error('Error al eliminar ingreso')
     }

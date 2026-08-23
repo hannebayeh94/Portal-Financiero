@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { useState } from 'react'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline'
 import ClayToggle from '../components/ClayToggle'
+import {
+  useExpenses,
+  useCategories,
+  useSaveExpense,
+  useDeleteExpense,
+} from '../hooks/useFinanceQueries'
 
 const MONTHS = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -12,9 +17,6 @@ const MONTHS = [
 
 export default function Expenses() {
   const now = new Date()
-  const [expenses, setExpenses] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
@@ -30,47 +32,23 @@ export default function Expenses() {
     apply_four_per_thousand: false,
   })
 
-  const fetchExpenses = async () => {
-    try {
-      const res = await api.get('/expenses', { params: { month: selectedMonth, year: selectedYear } })
-      setExpenses(res.data)
-    } catch (error) {
-      toast.error('Error al cargar egresos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/categories', { params: { type: 'expense' } })
-      setCategories(res.data)
-    } catch (error) { /* silencioso */ }
-  }
-
-  useEffect(() => {
-    fetchExpenses()
-  }, [selectedMonth, selectedYear])
-
-  useEffect(() => {
-    fetchCategories()
-  }, [])
+  const { data: expenses = [], isLoading: loading } = useExpenses(selectedMonth, selectedYear)
+  const { data: categories = [] } = useCategories('expense')
+  const saveMutation = useSaveExpense(selectedMonth, selectedYear)
+  const deleteMutation = useDeleteExpense()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     const payload = { ...formData, category_id: formData.category_id || null }
     try {
-      if (editingExpense) {
-        await api.put(`/expenses/${editingExpense.id}`, payload)
-        toast.success('Egreso actualizado')
-      } else {
-        await api.post('/expenses', payload)
-        toast.success('Egreso creado')
-      }
+      await saveMutation.mutateAsync({
+        id: editingExpense?.id,
+        payload: editingExpense ? payload : { ...payload },
+      })
+      toast.success(editingExpense ? 'Egreso actualizado' : 'Egreso creado')
       setShowModal(false)
       setEditingExpense(null)
       resetForm()
-      fetchExpenses()
     } catch (error) {
       toast.error('Error al guardar egreso')
     }
@@ -94,9 +72,8 @@ export default function Expenses() {
   const handleDelete = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este egreso?')) return
     try {
-      await api.delete(`/expenses/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Egreso eliminado')
-      fetchExpenses()
     } catch (error) {
       toast.error('Error al eliminar egreso')
     }

@@ -45,6 +45,7 @@ app.use('/api/savings', require('./routes/savings'));
 app.use('/api/projections', require('./routes/projections'));
 app.use('/api/simulations', require('./routes/simulations'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/insights', require('./routes/insights'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

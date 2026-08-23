@@ -1,14 +1,17 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
-import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayButton from '../components/ClayButton'
 import ClayInput from '../components/ClayInput'
 import ClayDatePicker from '../components/ClayDatePicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useSavings,
+  useSaveSavings,
+  useDeleteSavings,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -25,21 +28,13 @@ const emptyForm = () => ({
 
 export default function Savings({ navigation }) {
   const kb = useKeyboardHeight()
-  const [savings, setSavings] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [formData, setFormData] = useState(emptyForm())
 
-  const fetchSavings = async () => {
-    try {
-      const res = await api.get('/savings')
-      setSavings(res.data)
-    } catch (e) {
-    } finally { setLoading(false) }
-  }
-
-  useFocusEffect(useCallback(() => { fetchSavings() }, []))
+  const { data: savings = [], isLoading: loading } = useSavings()
+  const saveMutation = useSaveSavings()
+  const deleteMutation = useDeleteSavings()
 
   const openNew = () => { setEditing(null); setFormData(emptyForm()); setShowModal(true) }
 
@@ -65,8 +60,8 @@ export default function Savings({ navigation }) {
       interest_rate: formData.interest_rate === '' ? 0 : parseFloat(formData.interest_rate),
     }
     try {
-      editing ? await api.put(`/savings/${editing.id}`, payload) : await api.post('/savings', payload)
-      setShowModal(false); setEditing(null); setFormData(emptyForm()); fetchSavings()
+      await saveMutation.mutateAsync({ id: editing?.id, payload })
+      setShowModal(false); setEditing(null); setFormData(emptyForm())
     } catch (e) { dialog.alert('Error', 'Error al guardar la cuenta') }
   }
 
@@ -77,7 +72,7 @@ export default function Savings({ navigation }) {
       confirmLabel: 'Eliminar',
       destructive: true,
       onConfirm: async () => {
-        try { await api.delete(`/savings/${id}`); fetchSavings() }
+        try { await deleteMutation.mutateAsync(id) }
         catch (e) { dialog.alert('Error', 'Error al eliminar') }
       },
     })

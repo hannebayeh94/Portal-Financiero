@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import { ClayLineChart, ClayBarChart, ClayPieChart } from '../components/ClayChart'
+import { useReportsData } from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 
@@ -21,21 +21,14 @@ const TABS = [
 export default function Reports({ navigation }) {
   const [tab, setTab] = useState('flujo')
   const [year, setYear] = useState(currentYear)
-  const [cashFlow, setCashFlow] = useState(null)
-  const [monthly, setMonthly] = useState(null)
-  const [debtStatus, setDebtStatus] = useState(null)
-  const [savingsStatus, setSavingsStatus] = useState(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    setLoading(true)
-    Promise.all([
-      api.get('/reports/cash-flow').then(r => setCashFlow(r.data)).catch(() => {}),
-      api.get('/reports/monthly-evolution', { params: { year } }).then(r => setMonthly(r.data)).catch(() => {}),
-      api.get('/reports/debt-status').then(r => setDebtStatus(r.data)).catch(() => {}),
-      api.get('/reports/savings-status').then(r => setSavingsStatus(r.data)).catch(() => {}),
-    ]).finally(() => setLoading(false))
-  }, [year])
+  const {
+    loading,
+    cashFlow,
+    monthly,
+    debtStatus,
+    savingsStatus,
+  } = useReportsData(year)
 
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>

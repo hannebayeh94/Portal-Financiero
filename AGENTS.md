@@ -17,9 +17,26 @@
 ```
 portal-financiero/
 ├── backend/       Express + Knex + PostgreSQL (Supabase) — Render deploy
-├── frontend/      React + Vite + Tailwind + clay neumorphic — Vite dev
-└── mobile/        Expo SDK 57 + React Navigation 7 + clay neumorphic
+├── frontend/      React + Vite + Tailwind — Vite dev
+├── mobile/        Expo SDK 57 + React Navigation 7
+└── packages/      Código compartido entre plataformas
 ```
+
+## Sistema de diseño "Flujo"
+
+Identidad visual unificada web + Android (reemplaza al anterior clay neumorphic / Vault & Ledger):
+
+- **Fuente única de tokens**: `packages/design-tokens/index.js` (`@portal/design-tokens`) — colores papel/tinta con acentos agua `#1B8A8F` · coral `#E86A4E` · ámbar `#E9A13B`; tipografía Bricolage Grotesque (display) + Instrument Sans (cuerpo) + Spline Sans Mono (números).
+- **Geometría compartida del FlowMap**: `packages/design-tokens/flowGeometry.js` — misma matemática para el mapa de flujo en web (SVG, `frontend/src/components/FlowMap.jsx`) y Android (`react-native-svg`, `mobile/src/components/FlowMap.js`).
+- **Web**: Tailwind config y `frontend/src/index.css` consumen los tokens. Las clases legacy (`dark-*`, `primary-*`, `--clay-*`) siguen existiendo como alias remapeados a Flujo.
+- **Mobile**: `mobile/src/theme/index.js` deriva de los tokens compartidos; fuentes cargadas vía `useFonts` en `App.js` (`@expo-google-fonts/*`).
+- **Enlace mobile ↔ packages**: junction/symlink creado por `mobile/scripts/link-design-tokens.js` (postinstall automático) para `@portal/design-tokens` y `@portal/core`. Ojo: un `npm install` en `mobile/` puede borrar las junctions — si Metro no resuelve `@portal/*`, ejecutar `npm run postinstall` dentro de `mobile/`.
+
+## Paquete compartido de lógica
+
+- `packages/core/` (`@portal/core`) — formatters y lógica pura compartida. Los `utils/formatters.js` de web y mobile son re-exports del core; editar solo el core.
+- Hooks de datos: TanStack Query v5 en ambas apps con claves de caché espejadas (`frontend/src/hooks/useFinanceQueries.js` ↔ `mobile/src/hooks/useFinanceQueries.js`). Al agregar endpoints nuevos, definir la query en ambos hooks con las MISMAS claves. Tras mutaciones, invalidar con `queryClient.invalidateQueries({ queryKey: queryKeys.xxx })`.
+- **Offline-first**: la caché persiste 24h (localStorage en web vía `PersistQueryClientProvider` + sync-storage-persister; AsyncStorage en mobile vía async-storage-persister). Al agregar queries nuevas no hay que hacer nada extra. Si una query contiene datos sensibles por usuario, considerar limpiar la caché en logout (`queryClient.clear()`).
 
 ## Key commands
 
@@ -61,6 +78,7 @@ portal-financiero/
 /projections→ GET
 /simulations→ simulador engine (computeSimulation over real debts)
 /reports    → GET   /cash-flow, /monthly-evolution, /expenses-by-category
+/insights   → GET   (observaciones proactivas: tendencia de gasto, tasa de ahorro, presupuestos, consejo de deudas, pagos próximos)
 /health     → GET   (liveness check)
 ```
 

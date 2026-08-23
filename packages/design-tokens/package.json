@@ -1,0 +1,10 @@
+{
+  "name": "@portal/design-tokens",
+  "version": "1.0.0",
+  "description": "Tokens de diseño compartidos del sistema Flujo — Portal Financiero",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./flowGeometry": "./flowGeometry.js"
+  }
+}

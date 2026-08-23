@@ -12,9 +12,9 @@ import {
   Filler,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import api from '../services/api'
 import { formatCurrency } from '../utils/formatters'
 import { saveScenario, listScenarios, deleteScenario, exportScenario, importScenario } from '../utils/scenarios'
+import { useActiveSavings } from '../hooks/useFinanceQueries'
 import toast from 'react-hot-toast'
 import {
   ChartBarIcon,
@@ -75,8 +75,6 @@ const ACCOUNT_COLORS = [
 ]
 
 export default function Projections() {
-  const [accounts, setAccounts] = useState([])
-  const [loading, setLoading] = useState(true)
   const [months, setMonths] = useState(12)
   const [contributions, setContributions] = useState({})
 
@@ -85,26 +83,18 @@ export default function Projections() {
   const [distributionMode, setDistributionMode] = useState('percentage')
   const [planDist, setPlanDist] = useState({})
 
-  useEffect(() => {
-    fetchAccounts()
-  }, [])
+  const { data: accountsData, isLoading: loading } = useActiveSavings()
+  const accounts = accountsData || []
 
-  const fetchAccounts = async () => {
-    try {
-      const res = await api.get('/savings?active=true')
-      setAccounts(res.data)
-      const initial = {}
-      res.data.forEach(acct => { initial[acct.id] = '' })
-      setContributions(initial)
-      const distInit = {}
-      res.data.forEach(acct => { distInit[acct.id] = '' })
-      setPlanDist(distInit)
-    } catch (error) {
-      toast.error('Error al cargar cuentas de ahorro')
-    } finally {
-      setLoading(false)
-    }
-  }
+  useEffect(() => {
+    if (!accounts.length) return
+    const initial = {}
+    accounts.forEach(acct => { initial[acct.id] = '' })
+    setContributions(initial)
+    const distInit = {}
+    accounts.forEach(acct => { distInit[acct.id] = '' })
+    setPlanDist(distInit)
+  }, [accounts])
 
   const effectiveContributions = useMemo(() => {
     if (!planActive || !planTotal) return contributions

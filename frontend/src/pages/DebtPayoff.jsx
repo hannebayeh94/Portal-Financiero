@@ -12,9 +12,9 @@ import {
   Filler,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import api from '../services/api'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 import { saveScenario, listScenarios, deleteScenario, exportScenario, importScenario } from '../utils/scenarios'
+import { useDebts } from '../hooks/useFinanceQueries'
 import toast from 'react-hot-toast'
 import {
   PlusIcon,
@@ -135,7 +135,9 @@ export default function DebtPayoff() {
   const [activeDebtIndex, setActiveDebtIndex] = useState(0)
   const [newExtraPayment, setNewExtraPayment] = useState({ month: '', amount: '' })
   const [newIncrement, setNewIncrement] = useState({ month: '', amount: '' })
-  const [loadingExisting, setLoadingExisting] = useState(false)
+
+  const { data: existingDebtsData } = useDebts()
+  const loadingExisting = false
 
   const activeDebt = debts[activeDebtIndex]
   const projection = useMemo(() => {
@@ -223,11 +225,9 @@ export default function DebtPayoff() {
     setActiveDebtIndex(0)
   }
 
-  const loadFromExisting = async () => {
-    setLoadingExisting(true)
+  const loadFromExisting = () => {
     try {
-      const res = await api.get('/debts')
-      const activeDebts = res.data.filter(d => d.status === 'active' && d.current_balance > 0)
+      const activeDebts = (existingDebtsData || []).filter(d => d.status === 'active' && d.current_balance > 0)
       if (activeDebts.length === 0) {
         toast.error('No hay deudas activas para importar')
         return
@@ -250,8 +250,6 @@ export default function DebtPayoff() {
       toast.success(`${mapped.length} deuda(s) importada(s) correctamente`)
     } catch (error) {
       toast.error('Error al cargar deudas existentes')
-    } finally {
-      setLoadingExisting(false)
     }
   }
 

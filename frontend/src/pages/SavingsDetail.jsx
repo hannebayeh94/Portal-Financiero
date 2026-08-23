@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../services/api'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { ArrowLeftIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { useSavingsDetail } from '../hooks/useFinanceQueries'
 
 export default function SavingsDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [account, setAccount] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [showTransactionModal, setShowTransactionModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
@@ -36,26 +34,20 @@ export default function SavingsDetail() {
     active: true,
   })
 
-  useEffect(() => {
-    fetchAccount()
-  }, [id])
-
-  const fetchAccount = async () => {
-    try {
-      const res = await api.get(`/savings/${id}`)
-      setAccount(res.data)
-    } catch (error) {
-      toast.error('Error al cargar cuenta')
-      navigate('/savings')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const {
+    account,
+    loading,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    updateAccount,
+    deleteAccount,
+  } = useSavingsDetail(id)
 
   const handleTransaction = async (e) => {
     e.preventDefault()
     try {
-      await api.post(`/savings/${id}/transactions`, transactionData)
+      await addTransaction.mutateAsync(transactionData)
       toast.success('Transacción registrada')
       setShowTransactionModal(false)
       setTransactionData({
@@ -64,7 +56,6 @@ export default function SavingsDetail() {
         date: new Date().toISOString().split('T')[0],
         description: '',
       })
-      fetchAccount()
     } catch (error) {
       toast.error('Error al registrar transacción')
     }
@@ -86,10 +77,9 @@ export default function SavingsDetail() {
   const handleUpdate = async (e) => {
     e.preventDefault()
     try {
-      await api.put(`/savings/${id}`, editData)
+      await updateAccount.mutateAsync(editData)
       toast.success('Cuenta actualizada')
       setShowEditModal(false)
-      fetchAccount()
     } catch (error) {
       toast.error('Error al actualizar cuenta')
     }
@@ -98,7 +88,7 @@ export default function SavingsDetail() {
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar esta cuenta de ahorro?')) return
     try {
-      await api.delete(`/savings/${id}`)
+      await deleteAccount.mutateAsync()
       toast.success('Cuenta eliminada')
       navigate('/savings')
     } catch (error) {
@@ -120,11 +110,10 @@ export default function SavingsDetail() {
   const handleUpdateTransaction = async (e) => {
     e.preventDefault()
     try {
-      await api.put(`/savings/${id}/transactions/${editingTransaction.id}`, editTransactionData)
+      await updateTransaction.mutateAsync({ transactionId: editingTransaction.id, payload: editTransactionData })
       toast.success('Transacción actualizada')
       setShowEditTransactionModal(false)
       setEditingTransaction(null)
-      fetchAccount()
     } catch (error) {
       toast.error('Error al actualizar transacción')
     }
@@ -133,9 +122,8 @@ export default function SavingsDetail() {
   const handleDeleteTransaction = async (transactionId) => {
     if (!confirm('¿Estás seguro de eliminar esta transacción?')) return
     try {
-      await api.delete(`/savings/${id}/transactions/${transactionId}`)
+      await deleteTransaction.mutateAsync(transactionId)
       toast.success('Transacción eliminada')
-      fetchAccount()
     } catch (error) {
       toast.error('Error al eliminar transacción')
     }

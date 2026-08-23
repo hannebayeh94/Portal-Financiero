@@ -1,18 +1,12 @@
-import { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
+import { useProjections } from '../hooks/useFinanceQueries'
 import { colors, clay } from '../theme'
 import { formatCurrency, getMonthName } from '../utils/formatters'
 
 export default function Projections({ navigation }) {
-  const [projections, setProjections] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get('/projections').then(r => setProjections(r.data)).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  const { data: projections = [], isLoading: loading } = useProjections()
 
   return (
     <View style={{ flex: 1, backgroundColor: clay.bg }}>

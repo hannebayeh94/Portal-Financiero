@@ -1,42 +1,28 @@
-import { useState, useEffect } from 'react'
-import api from '../services/api'
+import { useState } from 'react'
 import { formatCurrency } from '../utils/formatters'
 import toast from 'react-hot-toast'
 import { PlusIcon, PencilIcon, TrashIcon, ChartPieIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import {
+  useBudgets,
+  useCategories,
+  useSaveBudget,
+  useDeleteBudget,
+} from '../hooks/useFinanceQueries'
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export default function Budgets() {
   const now = new Date()
-  const [data, setData] = useState({ budgets: [] })
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
   const [selectedYear, setSelectedYear] = useState(now.getFullYear())
   const [formData, setFormData] = useState({ category_id: '', amount: '' })
 
-  const fetchBudgets = async () => {
-    try {
-      const res = await api.get('/budgets', { params: { month: selectedMonth, year: selectedYear } })
-      setData(res.data)
-    } catch (error) {
-      toast.error('Error al cargar presupuestos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/categories', { params: { type: 'expense' } })
-      setCategories(res.data)
-    } catch (error) { /* silencioso */ }
-  }
-
-  useEffect(() => { fetchBudgets() }, [selectedMonth, selectedYear])
-  useEffect(() => { fetchCategories() }, [])
+  const { data, isLoading: loading } = useBudgets(selectedMonth, selectedYear)
+  const { data: categories = [] } = useCategories('expense')
+  const saveMutation = useSaveBudget(selectedMonth, selectedYear)
+  const deleteMutation = useDeleteBudget()
 
   const resetForm = () => setFormData({ category_id: '', amount: '' })
 
@@ -44,18 +30,21 @@ export default function Budgets() {
     e.preventDefault()
     try {
       if (editing) {
-        await api.put(`/budgets/${editing.id}`, { amount: formData.amount })
+        await saveMutation.mutateAsync({ id: editing.id, payload: { amount: formData.amount } })
         toast.success('Presupuesto actualizado')
       } else {
-        await api.post('/budgets', {
-          category_id: formData.category_id,
-          amount: formData.amount,
-          month: selectedMonth,
-          year: selectedYear,
+        await saveMutation.mutateAsync({
+          id: null,
+          payload: {
+            category_id: formData.category_id,
+            amount: formData.amount,
+            month: selectedMonth,
+            year: selectedYear,
+          },
         })
         toast.success('Presupuesto creado')
       }
-      setShowModal(false); setEditing(null); resetForm(); fetchBudgets()
+      setShowModal(false); setEditing(null); resetForm()
     } catch (error) {
       toast.error(error.response?.data?.error || 'Error al guardar presupuesto')
     }
@@ -70,9 +59,8 @@ export default function Budgets() {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este presupuesto?')) return
     try {
-      await api.delete(`/budgets/${id}`)
+      await deleteMutation.mutateAsync(id)
       toast.success('Presupuesto eliminado')
-      fetchBudgets()
     } catch (error) {
       toast.error('Error al eliminar presupuesto')
     }

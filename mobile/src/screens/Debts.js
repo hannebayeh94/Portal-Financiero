@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
 import ClayDatePicker from '../components/ClayDatePicker'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useDebts,
+  useSaveDebt,
+  useDeleteDebt,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency } from '../utils/formatters'
 
@@ -50,22 +54,16 @@ function Segmented({ options, value, onChange }) {
 }
 
 export default function Debts({ navigation }) {
-  const [debts, setDebts] = useState([])
-  const [loading, setLoading] = useState(true)
   const [modalVisible, setModalVisible] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
   const insets = useSafeAreaInsets()
   const kb = useKeyboardHeight()
 
-  const fetchDebts = () =>
-    api.get('/debts').then(r => setDebts(r.data)).catch(() => {}).finally(() => setLoading(false))
-
-  useEffect(() => {
-    const unsub = navigation.addListener('focus', fetchDebts)
-    return unsub
-  }, [navigation])
+  const { data: debts = [], isLoading: loading } = useDebts()
+  const saveMutation = useSaveDebt()
+  const deleteMutation = useDeleteDebt()
+  const saving = saveMutation.isPending
 
   const openCreate = () => {
     setEditing(null)
@@ -100,19 +98,11 @@ export default function Debts({ navigation }) {
       dialog.alert('Campos incompletos', 'Completa todos los campos obligatorios')
       return
     }
-    setSaving(true)
     try {
-      if (editing) {
-        await api.put(`/debts/${editing.id}`, form)
-      } else {
-        await api.post('/debts', form)
-      }
+      await saveMutation.mutateAsync({ id: editing?.id, payload: form })
       setModalVisible(false)
-      fetchDebts()
     } catch {
       dialog.alert('Error', editing ? 'No se pudo actualizar la deuda' : 'No se pudo crear la deuda')
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -122,7 +112,7 @@ export default function Debts({ navigation }) {
       message: `¿Eliminar "${name}"?`,
       confirmLabel: 'Eliminar',
       destructive: true,
-      onConfirm: async () => { await api.delete(`/debts/${id}`); setDebts(d => d.filter(x => x.id !== id)) },
+      onConfirm: async () => { await deleteMutation.mutateAsync(id) },
     })
   }
 

@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import api from '../api/client'
 import ClayCard from '../components/ClayCard'
 import ClayInput from '../components/ClayInput'
 import ClayButton from '../components/ClayButton'
@@ -10,6 +9,10 @@ import ClayDatePicker from '../components/ClayDatePicker'
 import { ClayLineChart, ClayPieChart } from '../components/ClayChart'
 import { dialog } from '../components/ConfirmDialog'
 import useKeyboardHeight from '../utils/useKeyboardHeight'
+import {
+  useDebtDetail,
+  useDebtMovements,
+} from '../hooks/useFinanceQueries'
 import { clay, colors } from '../theme'
 import { formatCurrency, formatDate } from '../utils/formatters'
 
@@ -26,10 +29,6 @@ function Stat({ label, value, color }) {
 
 export default function DebtDetail({ route, navigation }) {
   const { id } = route.params
-  const [debt, setDebt] = useState(null)
-  const [projection, setProjection] = useState(null)
-  const [cyclesData, setCyclesData] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [paymentModal, setPaymentModal] = useState(false)
   const [chargeModal, setChargeModal] = useState(false)
   const [editMovModal, setEditMovModal] = useState(false)
@@ -37,49 +36,33 @@ export default function DebtDetail({ route, navigation }) {
   const [payForm, setPayForm] = useState({ amount: '', payment_date: today() })
   const [chargeForm, setChargeForm] = useState({ amount: '', payment_date: today(), description: '' })
   const [editForm, setEditForm] = useState({ amount: '', payment_date: today() })
-  const [saving, setSaving] = useState(false)
   const insets = useSafeAreaInsets()
 
-  const fetchDebt = useCallback(async () => {
-    try {
-      const r = await api.get(`/debts/${id}`)
-      setDebt(r.data)
-      api.get(`/debts/${id}/projection`).then(pr => setProjection(pr.data)).catch(() => {})
-      api.get(`/debts/${id}/cycles`).then(cr => setCyclesData(cr.data)).catch(() => {})
-    } catch {
-      dialog.alert('Error', 'No se pudo cargar la deuda')
-      navigation.goBack()
-    } finally {
-      setLoading(false)
-    }
-  }, [id, navigation])
-
-  useEffect(() => { fetchDebt() }, [fetchDebt])
+  const { debt, loading } = useDebtDetail(id)
+  const { addPayment, addCharge, updatePayment, deletePayment, removeDebt } = useDebtMovements(id)
+  const saving =
+    addPayment.isPending || addCharge.isPending || updatePayment.isPending
 
   const registerPayment = async () => {
     if (!payForm.amount) { dialog.alert('Falta el monto', 'Ingresa el monto del pago'); return }
-    setSaving(true)
     try {
-      await api.post(`/debts/${id}/payments`, payForm)
+      await addPayment.mutateAsync(payForm)
       setPaymentModal(false)
       setPayForm({ amount: '', payment_date: today() })
-      await fetchDebt()
     } catch {
       dialog.alert('Error', 'No se pudo registrar el pago')
-    } finally { setSaving(false) }
+    }
   }
 
   const registerCharge = async () => {
     if (!chargeForm.amount) { dialog.alert('Falta el monto', 'Ingresa el monto del consumo'); return }
-    setSaving(true)
     try {
-      await api.post(`/debts/${id}/charges`, chargeForm)
+      await addCharge.mutateAsync(chargeForm)
       setChargeModal(false)
       setChargeForm({ amount: '', payment_date: today(), description: '' })
-      await fetchDebt()
     } catch {
       dialog.alert('Error', 'No se pudo registrar el consumo')
-    } finally { setSaving(false) }
+    }
   }
 
   const openEditMov = (mov) => {
@@ -89,15 +72,13 @@ export default function DebtDetail({ route, navigation }) {
   }
 
   const updateMov = async () => {
-    setSaving(true)
     try {
-      await api.put(`/debts/${id}/payments/${editingMov.id}`, editForm)
+      await updatePayment.mutateAsync({ paymentId: editingMov.id, payload: editForm })
       setEditMovModal(false)
       setEditingMov(null)
-      await fetchDebt()
     } catch {
       dialog.alert('Error', 'No se pudo actualizar el movimiento')
-    } finally { setSaving(false) }
+    }
   }
 
   const deleteMov = (mov) => {
@@ -108,7 +89,7 @@ export default function DebtDetail({ route, navigation }) {
       confirmLabel: 'Eliminar',
       destructive: true,
       onConfirm: async () => {
-        try { await api.delete(`/debts/${id}/payments/${mov.id}`); await fetchDebt() }
+        try { await deletePayment.mutateAsync(mov.id) }
         catch { dialog.alert('Error', 'No se pudo eliminar') }
       },
     })
@@ -121,7 +102,7 @@ export default function DebtDetail({ route, navigation }) {
       confirmLabel: 'Eliminar',
       destructive: true,
       onConfirm: async () => {
-        try { await api.delete(`/debts/${id}`); navigation.goBack() }
+        try { await removeDebt.mutateAsync(); navigation.goBack() }
         catch { dialog.alert('Error', 'No se pudo eliminar la deuda') }
       },
     })
