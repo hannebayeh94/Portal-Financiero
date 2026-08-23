@@ -66,7 +66,7 @@ export default function Budgets() {
     }
   }
 
-  const budgets = data.budgets || []
+  const budgets = data?.budgets ?? []
   const totalBudget = budgets.reduce((s, b) => s + parseFloat(b.amount || 0), 0)
   const totalSpent = budgets.reduce((s, b) => s + parseFloat(b.spent || 0), 0)
   // categorías sin presupuesto aún, para el selector de creación
