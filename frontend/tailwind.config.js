@@ -17,6 +17,7 @@ export default {
           DEFAULT: flow.colors.mist,
           soft: flow.colors.mistSoft,
         },
+        line: 'var(--line)',
         ink: {
           DEFAULT: flow.colors.ink,
           soft: flow.colors.inkSoft,
