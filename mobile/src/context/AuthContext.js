@@ -75,6 +75,25 @@ export function AuthProvider({ children }) {
     await persistSession(token, userData, refreshToken)
   }
 
+  const forgotPassword = async (email) => {
+    const res = await api.post('/auth/forgot-password', { email })
+    return res.data
+  }
+
+  const resetPassword = async (email, code, newPassword) => {
+    const res = await api.post('/auth/reset-password', { email, code, newPassword })
+    return res.data
+  }
+
+  const changePassword = async (currentPassword, newPassword) => {
+    const res = await api.post('/auth/change-password', { currentPassword, newPassword })
+    if (res.data?.token) {
+      await SecureStore.setItemAsync(TOKEN_KEY, res.data.token)
+      await SecureStore.setItemAsync(REFRESH_KEY, res.data.refreshToken)
+    }
+    return res.data
+  }
+
   const logout = async () => {
     const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY).catch(() => null)
     try {
@@ -89,7 +108,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, forgotPassword, resetPassword, changePassword }}>
       {children}
     </AuthContext.Provider>
   )

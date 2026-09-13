@@ -17,6 +17,7 @@ import {
   TagIcon,
   ChartPieIcon,
   BeakerIcon,
+  KeyIcon,
 } from '@heroicons/react/24/outline'
 
 const navGroups = [
@@ -120,6 +121,14 @@ function SidebarContent({ user, onLogout, onNavigate }) {
             <p className="text-sm font-semibold truncate text-ink">{user?.name}</p>
             <p className="text-[11px] truncate text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>{user?.email}</p>
           </div>
+          <Link
+            to="/change-password"
+            onClick={onNavigate}
+            title="Cambiar contraseña"
+            className="p-2 rounded-lg text-ink-muted hover:text-water-dark hover:bg-water-tint transition-all"
+          >
+            <KeyIcon className="h-5 w-5" />
+          </Link>
           <button
             onClick={onLogout}
             title="Cerrar sesión"

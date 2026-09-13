@@ -125,6 +125,11 @@ export default function Login({ navigation }) {
               }
             />
             <ClayButton title="Iniciar Sesión" onPress={handleSubmit} loading={loading} style={{ marginTop: 4 }} />
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, fontFamily: fonts.bodySemiBold, color: colors.primary[600] }}>
+                ¿Olvidaste tu contraseña?
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={() => navigation.navigate('Register')} style={{ marginTop: 20, alignItems: 'center', paddingVertical: 4 }}>

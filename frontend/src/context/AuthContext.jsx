@@ -35,6 +35,25 @@ export function AuthProvider({ children }) {
     return res.data
   }
 
+  const forgotPassword = async (email) => {
+    const res = await api.post('/auth/forgot-password', { email })
+    return res.data
+  }
+
+  const resetPassword = async (email, code, newPassword) => {
+    const res = await api.post('/auth/reset-password', { email, code, newPassword })
+    return res.data
+  }
+
+  const changePassword = async (currentPassword, newPassword) => {
+    const res = await api.post('/auth/change-password', { currentPassword, newPassword })
+    if (res.data?.token) {
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('refreshToken', res.data.refreshToken)
+    }
+    return res.data
+  }
+
   const logout = async () => {
     const refreshToken = localStorage.getItem('refreshToken')
     try {
@@ -46,7 +65,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, forgotPassword, resetPassword, changePassword }}>
       {children}
     </AuthContext.Provider>
   )

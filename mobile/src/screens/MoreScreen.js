@@ -17,6 +17,7 @@ const items = [
   { name: 'Simulator', label: 'Simulador', icon: 'analytics', grad: gradients.report, desc: 'Simula tu flujo de caja a futuro' },
   { name: 'Reminders', label: 'Recordatorios', icon: 'notifications', grad: gradients.income, desc: 'Avisos de vencimientos y recurrentes' },
   { name: 'Security', label: 'Seguridad', icon: 'lock-closed', grad: gradients.report, desc: 'Bloqueo con PIN y biometría' },
+  { name: 'ChangePassword', label: 'Cambiar contraseña', icon: 'key', grad: gradients.calc, desc: 'Actualiza tu clave de acceso' },
 ]
 
 function Row({ icon, grad, label, desc, onPress, badge }) {

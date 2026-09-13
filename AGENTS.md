@@ -68,7 +68,7 @@ Identidad visual unificada web + Android (reemplaza al anterior clay neumorphic 
 
 `backend/src/server.js` mounts routes under `/api`:
 ```
-/auth       → POST   /login, /register
+/auth       → POST   /login, /register, /refresh, /logout, /change-password, /forgot-password, /reset-password
 /categories → GET, POST, PUT, DELETE  (default categories seeded per user)
 /budgets    → GET, POST, PUT, DELETE
 /incomes    → GET, POST, PUT, DELETE  (user_id from JWT)
@@ -83,7 +83,9 @@ Identidad visual unificada web + Android (reemplaza al anterior clay neumorphic 
 /health     → GET   (liveness check)
 ```
 
-Backend domain logic in `backend/src/utils/`: `simulationEngine.js` (pure `computeSimulation(config, debts)`), `creditCardEngine.js` (pure `computeCreditCardPlan(config)` — compras cuotificadas con capital fijo/`linear` o cuota fija/`annuity`), `billingCycles.js` (`buildCycles` — cut-day/billing math), `defaultCategories.js`.
+Backend domain logic in `backend/src/utils/`: `simulationEngine.js` (pure `computeSimulation(config, debts)`), `creditCardEngine.js` (pure `computeCreditCardPlan(config)` — compras cuotificadas con capital fijo/`linear` o cuota fija/`annuity`), `billingCycles.js` (`buildCycles` — cut-day/billing math), `defaultCategories.js`, `mailer.js` (código de recuperación por SMTP — opcional; sin `SMTP_*` queda en logs).
+
+Recuperación de contraseña: `forgot-password` genera un código de 6 dígitos (tabla `password_reset_tokens`, 15 min, 5 intentos) y lo envía por email **solo si** hay `SMTP_HOST/SMTP_USER/SMTP_PASS` (y `MAIL_FROM`, `SMTP_PORT`, `SMTP_SECURE`, `RESET_CODE_TTL_MINUTES`) configurados; si no, se registra en los logs del servidor. `change-password` y `reset-password` revocan todas las sesiones (refresh tokens).
 
 JWT token stored in `localStorage.getItem('token')` (frontend) or `AsyncStorage.getItem('token')` (mobile). 401 interceptor clears token and redirects to `/login`.
 

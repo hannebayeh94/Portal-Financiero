@@ -3,6 +3,8 @@ import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ChangePassword from './pages/ChangePassword'
 import Dashboard from './pages/Dashboard'
 import Incomes from './pages/Incomes'
 import Expenses from './pages/Expenses'
@@ -52,6 +54,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="incomes" element={<Incomes />} />
@@ -68,6 +71,7 @@ export default function App() {
         <Route path="projections" element={<Projections />} />
         <Route path="simulator" element={<Simulator />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="change-password" element={<ChangePassword />} />
       </Route>
     </Routes>
   )

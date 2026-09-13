@@ -22,6 +22,8 @@ import { clay, colors } from './src/theme'
 
 import Login from './src/screens/Login'
 import Register from './src/screens/Register'
+import ForgotPassword from './src/screens/ForgotPassword'
+import ChangePassword from './src/screens/ChangePassword'
 import Dashboard from './src/screens/Dashboard'
 import Expenses from './src/screens/Expenses'
 import Incomes from './src/screens/Incomes'
@@ -83,6 +85,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reminders" component={Reminders} options={{ headerShown: false }} />
       <MoreStack.Screen name="Security" component={Security} options={{ headerShown: false }} />
+      <MoreStack.Screen name="ChangePassword" component={ChangePassword} options={{ headerShown: false }} />
       <MoreStack.Screen name="PaymentsHistory" component={PaymentsHistory} options={{ headerShown: false }} />
     </MoreStack.Navigator>
   )
@@ -134,6 +137,7 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
     </Stack.Navigator>
   )
 }

@@ -9,6 +9,7 @@ const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { seedDefaultCategories } = require('../utils/defaultCategories');
+const { sendPasswordResetCode } = require('../utils/mailer');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const ACCESS_TOKEN_TTL = process.env.JWT_EXPIRES_IN || '7d';
@@ -32,6 +33,11 @@ function signAccessToken(user) {
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
+
+// Recuperación de contraseña: código de 6 dígitos, vigencia corta y pocos intentos.
+const RESET_CODE_TTL_MS = (parseInt(process.env.RESET_CODE_TTL_MINUTES, 10) || 15) * 60 * 1000;
+const MAX_RESET_ATTEMPTS = 5;
+const generateResetCode = () => String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 
 function generateRefreshToken() {
   return crypto.randomBytes(64).toString('hex');
@@ -209,6 +215,130 @@ router.get('/me', authenticateToken, async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener usuario' });
+  }
+});
+
+// Cambiar contraseña estando autenticado. Revoca todas las sesiones y emite un
+// par nuevo de tokens para que el dispositivo actual siga conectado.
+router.post('/change-password', authenticateToken, [
+  body('currentPassword').isString().notEmpty().withMessage('Ingresa tu contraseña actual'),
+  body('newPassword').isString().isLength({ min: 8, max: 72 }).withMessage('La nueva contraseña debe tener al menos 8 caracteres'),
+  validate,
+], async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await db('users').where({ id: req.user.id }).first();
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'La contraseña actual no es correcta' });
+    }
+
+    const isSame = await bcrypt.compare(newPassword, user.password);
+    if (isSame) {
+      return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db('users').where({ id: user.id }).update({ password: hashedPassword, updated_at: db.fn.now() });
+    await db('refresh_tokens').where({ user_id: user.id }).update({ revoked_at: db.fn.now() });
+
+    const token = signAccessToken(user);
+    const refreshToken = await issueRefreshToken(user.id);
+
+    res.json({ message: 'Contraseña actualizada', token, refreshToken });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al cambiar la contraseña' });
+  }
+});
+
+// Solicita un código de recuperación. Respuesta genérica para no revelar si el
+// correo existe. Si hay SMTP configurado se envía por email; si no, queda en logs.
+router.post('/forgot-password', authLimiter, [emailField, validate], async (req, res) => {
+  const generic = { message: 'Si el correo está registrado, te enviamos un código de recuperación.' };
+  try {
+    const { email } = req.body;
+    const user = await db('users').where({ email }).first();
+    if (!user) {
+      return res.json(generic);
+    }
+
+    const code = generateResetCode();
+    const expiresAt = new Date(Date.now() + RESET_CODE_TTL_MS);
+
+    await db.transaction(async (trx) => {
+      // Invalida códigos anteriores sin usar antes de emitir uno nuevo.
+      await trx('password_reset_tokens')
+        .where({ user_id: user.id, used_at: null })
+        .update({ used_at: trx.fn.now() });
+      await trx('password_reset_tokens').insert({
+        user_id: user.id,
+        code_hash: hashToken(code),
+        expires_at: expiresAt,
+      });
+    });
+
+    try {
+      await sendPasswordResetCode({ to: user.email, code, name: user.name });
+    } catch (mailError) {
+      console.error('[auth] No se pudo enviar el correo de recuperación:', mailError.message);
+      console.warn(`[auth] Código de recuperación para ${user.email}: ${code}`);
+    }
+
+    return res.json(generic);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al solicitar la recuperación' });
+  }
+});
+
+// Restablece la contraseña con el código recibido. Invalida tokens y sesiones.
+router.post('/reset-password', authLimiter, [
+  emailField,
+  body('code').isString().trim().isLength({ min: 6, max: 6 }).withMessage('Ingresa el código de 6 dígitos'),
+  body('newPassword').isString().isLength({ min: 8, max: 72 }).withMessage('La nueva contraseña debe tener al menos 8 caracteres'),
+  validate,
+], async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    const user = await db('users').where({ email }).first();
+    if (!user) {
+      return res.status(400).json({ error: 'Código inválido o expirado' });
+    }
+
+    const record = await db('password_reset_tokens')
+      .where({ user_id: user.id, used_at: null })
+      .orderBy('created_at', 'desc')
+      .first();
+
+    if (!record || new Date(record.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Código inválido o expirado' });
+    }
+    if (record.attempts >= MAX_RESET_ATTEMPTS) {
+      return res.status(429).json({ error: 'Demasiados intentos. Solicita un nuevo código.' });
+    }
+
+    if (record.code_hash !== hashToken(code)) {
+      await db('password_reset_tokens')
+        .where({ id: record.id })
+        .update({ attempts: record.attempts + 1, updated_at: db.fn.now() });
+      return res.status(400).json({ error: 'Código inválido o expirado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.transaction(async (trx) => {
+      await trx('users').where({ id: user.id }).update({ password: hashedPassword, updated_at: trx.fn.now() });
+      await trx('password_reset_tokens').where({ id: record.id }).update({ used_at: trx.fn.now() });
+      await trx('refresh_tokens').where({ user_id: user.id }).update({ revoked_at: trx.fn.now() });
+    });
+
+    res.json({ message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al restablecer la contraseña' });
   }
 });
 
