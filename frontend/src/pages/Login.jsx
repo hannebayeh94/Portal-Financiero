@@ -8,9 +8,9 @@ function BrandMark({ small = false }) {
   return (
     <div
       className={`${small ? 'w-9 h-9' : 'w-12 h-12'} rounded-full flex items-center justify-center flex-shrink-0 border border-water-tint`}
-      style={{ background: 'linear-gradient(140deg, #22A0A6, #14666B)', boxShadow: '0 6px 18px -8px rgba(27,138,143,0.5)' }}
+      style={{ background: 'linear-gradient(140deg, #6C8CFF, #37D399)', boxShadow: '0 6px 18px -8px rgba(27,138,143,0.5)' }}
     >
-      <span className={`${small ? 'text-sm' : 'text-lg'} text-white leading-none font-bold`} style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+      <span className={`${small ? 'text-sm' : 'text-lg'} text-white leading-none font-bold`} style={{ fontFamily: '"Sora", sans-serif' }}>
         PF
       </span>
     </div>
@@ -22,19 +22,19 @@ function FlowRivers() {
   return (
     <svg viewBox="0 0 480 300" fill="none" className="w-full max-w-md" aria-hidden="true">
       <path d="M10 150 C 120 150, 160 60, 250 60 C 330 60, 360 30, 470 30"
-        stroke="#1B8A8F" strokeWidth="14" strokeLinecap="round" opacity="0.9"
+        stroke="#6C8CFF" strokeWidth="14" strokeLinecap="round" opacity="0.9"
         pathLength="1" className="animate-flow-draw" />
       <path d="M10 150 C 120 150, 160 150, 250 150 C 340 150, 380 120, 470 120"
-        stroke="#E86A4E" strokeWidth="9" strokeLinecap="round" opacity="0.85"
+        stroke="#FF6B6B" strokeWidth="9" strokeLinecap="round" opacity="0.85"
         pathLength="1" className="animate-flow-draw" style={{ animationDelay: '180ms' }} />
       <path d="M10 150 C 120 150, 170 240, 260 240 C 350 240, 390 272, 470 272"
-        stroke="#E9A13B" strokeWidth="7" strokeLinecap="round" opacity="0.85"
+        stroke="#F5B84B" strokeWidth="7" strokeLinecap="round" opacity="0.85"
         pathLength="1" className="animate-flow-draw" style={{ animationDelay: '320ms' }} />
-      <circle cx="452" cy="30" r="8" fill="#1B8A8F" />
-      <circle cx="452" cy="120" r="7" fill="#E86A4E" />
-      <circle cx="452" cy="272" r="6" fill="#E9A13B" />
-      <circle cx="24" cy="150" r="16" fill="#FFFFFF" stroke="#123332" strokeWidth="3" />
-      <circle cx="24" cy="150" r="6" fill="#123332" />
+      <circle cx="452" cy="30" r="8" fill="#6C8CFF" />
+      <circle cx="452" cy="120" r="7" fill="#FF6B6B" />
+      <circle cx="452" cy="272" r="6" fill="#F5B84B" />
+      <circle cx="24" cy="150" r="16" fill="#10151F" stroke="#E8EEF7" strokeWidth="3" />
+      <circle cx="24" cy="150" r="6" fill="#E8EEF7" />
     </svg>
   )
 }
@@ -74,7 +74,7 @@ export default function Login() {
         <div className="relative z-10 max-w-lg">
           <BrandMark />
           <p className="eyebrow mt-8">El mapa de tu dinero</p>
-          <h1 className="mt-4 text-6xl font-bold text-ink leading-[1.04]" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+          <h1 className="mt-4 text-6xl font-bold text-ink leading-[1.04]" style={{ fontFamily: '"Sora", sans-serif' }}>
             Mira hacia dónde
             <span className="text-water"> fluye</span> tu plata
           </h1>
@@ -94,7 +94,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="absolute bottom-8 left-16 xl:left-24 z-10 text-[11px] tracking-[0.2em] uppercase text-ink-faint" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>
+        <p className="absolute bottom-8 left-16 xl:left-24 z-10 text-[11px] tracking-[0.2em] uppercase text-ink-faint" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
           Portal Financiero · Flujo v1
         </p>
       </div>
@@ -105,14 +105,14 @@ export default function Login() {
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <BrandMark small />
             <div className="leading-tight">
-              <span className="block text-xl font-semibold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>Portal Financiero</span>
-              <span className="block text-[10px] tracking-[0.2em] uppercase text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>Tu mapa financiero</span>
+              <span className="block text-xl font-semibold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>Portal Financiero</span>
+              <span className="block text-[10px] tracking-[0.2em] uppercase text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>Tu mapa financiero</span>
             </div>
           </div>
 
           <div className="card p-8 animate-slide-up shadow-flow-lg">
             <p className="eyebrow">Acceso</p>
-            <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+            <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>
               Iniciar sesión
             </h2>
             <p className="mt-2 text-sm text-ink-muted">
@@ -182,7 +182,7 @@ export default function Login() {
               </Link>
             </div>
 
-            <div className="mt-7 pt-5 border-t border-line flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-ink-faint" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>
+            <div className="mt-7 pt-5 border-t border-line flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-ink-faint" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
               <span className="flex items-center gap-1.5"><ShieldCheckIcon className="h-3.5 w-3.5" /> Cifrado AES</span>
               <span className="flex items-center gap-1.5"><LockClosedIcon className="h-3.5 w-3.5" /> Sesión segura</span>
               <span className="flex items-center gap-1.5"><ChartBarIcon className="h-3.5 w-3.5" /> 1 cuenta</span>

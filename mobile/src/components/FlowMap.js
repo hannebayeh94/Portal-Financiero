@@ -18,14 +18,14 @@ export default function FlowMap({ income, streams, formatValue, width = 340 }) {
       <Svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{ aspectRatio: width / height }}>
         <Path
           d={`M ${width * 0.08} ${height / 2} C ${width * 0.35} ${height / 2}, ${width * 0.4} ${height * 0.3}, ${width * 0.6} ${height * 0.3}`}
-          stroke="#CFC7B2" strokeWidth={3} fill="none" strokeLinecap="round" strokeDasharray="1 7"
+          stroke="#2A3648" strokeWidth={3} fill="none" strokeLinecap="round" strokeDasharray="1 7"
         />
         <Path
           d={`M ${width * 0.08} ${height / 2} C ${width * 0.35} ${height / 2}, ${width * 0.4} ${height * 0.7}, ${width * 0.6} ${height * 0.7}`}
-          stroke="#CFC7B2" strokeWidth={3} fill="none" strokeLinecap="round" strokeDasharray="1 7"
+          stroke="#2A3648" strokeWidth={3} fill="none" strokeLinecap="round" strokeDasharray="1 7"
         />
-        <Circle cx={width * 0.66} cy={height * 0.3} r={5} fill="#E9E4D7" />
-        <Circle cx={width * 0.66} cy={height * 0.7} r={5} fill="#E9E4D7" />
+        <Circle cx={width * 0.66} cy={height * 0.3} r={5} fill="#1E2837" />
+        <Circle cx={width * 0.66} cy={height * 0.7} r={5} fill="#1E2837" />
       </Svg>
     )
   }
@@ -45,11 +45,11 @@ export default function FlowMap({ income, streams, formatValue, width = 340 }) {
       ))}
 
       {/* Nodo origen: el ingreso */}
-      <Circle cx={source.x} cy={source.y} r={22} fill="#FFFFFF" stroke="#1B8A8F" strokeWidth={3} />
-      <Circle cx={source.x} cy={source.y} r={8} fill="#1B8A8F" />
+      <Circle cx={source.x} cy={source.y} r={22} fill="#10151F" stroke="#6C8CFF" strokeWidth={3} />
+      <Circle cx={source.x} cy={source.y} r={8} fill="#6C8CFF" />
       <SvgText
         x={source.x} y={source.y - 32} textAnchor="middle"
-        fontFamily={fonts.monoSemiBold} fontSize={10} letterSpacing={2} fill="#6E8884"
+        fontFamily={fonts.monoSemiBold} fontSize={10} letterSpacing={2} fill="#8794A8"
       >INGRESO</SvgText>
 
       {/* Estaciones destino */}
@@ -58,11 +58,11 @@ export default function FlowMap({ income, streams, formatValue, width = 340 }) {
           <Circle cx={targetX + 5} cy={node.endY} r={Math.max(4, node.thickness / 2)} fill={node.color} />
           <SvgText
             x={targetX + 18} y={node.endY - 3}
-            fontFamily={fonts.bodyBold} fontSize={12} fill="#123332"
+            fontFamily={fonts.bodyBold} fontSize={12} fill="#E8EEF7"
           >{node.label}</SvgText>
           <SvgText
             x={targetX + 18} y={node.endY + 11}
-            fontFamily={fonts.monoMedium} fontSize={11} fill="#6E8884"
+            fontFamily={fonts.monoMedium} fontSize={11} fill="#8794A8"
           >{fmt(node.value)} · {(node.ratio * 100).toFixed(0)}%</SvgText>
         </React.Fragment>
       ))}

@@ -298,7 +298,7 @@ export default function Projections() {
         position: 'bottom',
         labels: {
           color: '#8b95a8',
-          font: { size: 11, family: '"IBM Plex Mono", monospace' },
+          font: { size: 11, family: '"JetBrains Mono", monospace' },
           padding: 16,
           usePointStyle: true,
           pointStyle: 'circle',
@@ -320,13 +320,13 @@ export default function Projections() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 },
+        ticks: { color: '#8b95a8', font: { size: 10, family: '"JetBrains Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 },
       },
       y: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
           color: '#8b95a8',
-          font: { size: 11, family: '"IBM Plex Mono", monospace' },
+          font: { size: 11, family: '"JetBrains Mono", monospace' },
           callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
@@ -429,7 +429,7 @@ export default function Projections() {
                   planActive ? 'bg-green-500' : 'bg-gray-300'
                 }`}
               >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-dark-900 transition-transform duration-300 shadow-sm ${
                   planActive ? 'translate-x-6' : 'translate-x-1'
                 }`} />
               </button>

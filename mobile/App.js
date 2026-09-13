@@ -5,9 +5,9 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFonts } from 'expo-font'
-import { BricolageGrotesque_600SemiBold, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque'
-import { InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold, InstrumentSans_700Bold } from '@expo-google-fonts/instrument-sans'
-import { SplineSansMono_400Regular, SplineSansMono_500Medium, SplineSansMono_600SemiBold } from '@expo-google-fonts/spline-sans-mono'
+import { Sora_600SemiBold, Sora_700Bold } from '@expo-google-fonts/sora'
+import { Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope'
+import { JetBrainsMono_400Regular, JetBrainsMono_500Medium, JetBrainsMono_600SemiBold } from '@expo-google-fonts/jetbrains-mono'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -170,15 +170,15 @@ function RootNavigator() {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    BricolageGrotesque_600SemiBold,
-    BricolageGrotesque_700Bold,
-    InstrumentSans_400Regular,
-    InstrumentSans_500Medium,
-    InstrumentSans_600SemiBold,
-    InstrumentSans_700Bold,
-    SplineSansMono_400Regular,
-    SplineSansMono_500Medium,
-    SplineSansMono_600SemiBold,
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_600SemiBold,
   })
 
   if (!fontsLoaded) {
@@ -192,7 +192,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <DialogProvider>
           <AppLockProvider>
             <RootNavigator />

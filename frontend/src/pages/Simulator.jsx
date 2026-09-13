@@ -277,7 +277,7 @@ export default function Simulator() {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: '#8b95a8', font: { size: 11, family: '"IBM Plex Mono", monospace' }, padding: 14, usePointStyle: true, pointStyle: 'circle' },
+        labels: { color: '#8b95a8', font: { size: 11, family: '"JetBrains Mono", monospace' }, padding: 14, usePointStyle: true, pointStyle: 'circle' },
       },
       tooltip: {
         backgroundColor: '#1b2130', titleColor: '#eceee6', bodyColor: '#a6b0c2',
@@ -286,11 +286,11 @@ export default function Simulator() {
       },
     },
     scales: {
-      x: { stacked, grid: { display: false }, ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 } },
+      x: { stacked, grid: { display: false }, ticks: { color: '#8b95a8', font: { size: 10, family: '"JetBrains Mono", monospace' }, maxRotation: 45, maxTicksLimit: 12 } },
       y: {
         stacked,
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-        ticks: { color: '#8b95a8', font: { size: 11, family: '"IBM Plex Mono", monospace' }, callback: (v) => '$' + v.toLocaleString('es-CO') },
+        ticks: { color: '#8b95a8', font: { size: 11, family: '"JetBrains Mono", monospace' }, callback: (v) => '$' + v.toLocaleString('es-CO') },
       },
     },
   })
@@ -367,7 +367,7 @@ export default function Simulator() {
               onClick={() => setField('includeDebts', !config.includeDebts)}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 ${config.includeDebts ? 'bg-green-500' : 'bg-gray-300'}`}
             >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${config.includeDebts ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-dark-900 transition-transform duration-300 shadow-sm ${config.includeDebts ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
             <span className="text-sm" style={{ color: 'var(--clay-text)' }}>Integrar mis deudas reales (amortización automática de cuotas e intereses)</span>
           </div>

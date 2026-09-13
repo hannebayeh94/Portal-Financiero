@@ -31,10 +31,10 @@ import {
 } from '@heroicons/react/24/outline'
 
 const INSIGHT_STYLE = {
-  warning: { icon: ExclamationTriangleIcon, color: '#C24E36', bg: 'var(--coral-tint)' },
-  positive: { icon: CheckCircleIcon, color: '#3A6A34', bg: '#E8F4E5' },
-  tip: { icon: LightBulbIcon, color: '#A5691A', bg: 'var(--amber-tint)' },
-  info: { icon: InformationCircleIcon, color: '#14666B', bg: 'var(--water-tint)' },
+  warning: { icon: ExclamationTriangleIcon, color: '#F5B84B', bg: 'var(--warn-tint)' },
+  positive: { icon: CheckCircleIcon, color: '#37D399', bg: 'rgba(55,211,153,0.12)' },
+  tip: { icon: LightBulbIcon, color: '#F5B84B', bg: 'var(--amber-tint)' },
+  info: { icon: InformationCircleIcon, color: '#8FA8FF', bg: 'var(--water-tint)' },
 }
 
 ChartJS.register(
@@ -50,10 +50,10 @@ ChartJS.register(
   Filler
 )
 
-const WATER = '#1B8A8F'
-const CORAL = '#E86A4E'
-const INK_MUTED = '#6E8884'
-const GRID = 'rgba(18, 51, 50, 0.06)'
+const WATER = '#6C8CFF'
+const CORAL = '#FF6B6B'
+const INK_MUTED = '#8794A8'
+const GRID = 'rgba(255,255,255,0.06)'
 
 export default function Dashboard() {
   const {
@@ -95,7 +95,7 @@ export default function Dashboard() {
         fill: true,
         tension: 0.4,
         pointBackgroundColor: WATER,
-        pointBorderColor: '#FFFFFF',
+        pointBorderColor: '#10151F',
         pointBorderWidth: 2,
         pointRadius: 3,
         pointHoverRadius: 5,
@@ -108,7 +108,7 @@ export default function Dashboard() {
         fill: true,
         tension: 0.4,
         pointBackgroundColor: CORAL,
-        pointBorderColor: '#FFFFFF',
+        pointBorderColor: '#10151F',
         pointBorderWidth: 2,
         pointRadius: 3,
         pointHoverRadius: 5,
@@ -122,10 +122,11 @@ export default function Dashboard() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#123332',
-        borderWidth: 0,
-        titleColor: '#F6F3EC',
-        bodyColor: '#C9D8D6',
+        backgroundColor: '#161D2A',
+        borderColor: '#2A3648',
+        borderWidth: 1,
+        titleColor: '#E8EEF7',
+        bodyColor: '#C2CCDA',
         padding: 12,
         cornerRadius: 10,
         callbacks: {
@@ -138,7 +139,7 @@ export default function Dashboard() {
         grid: { display: false },
         ticks: {
           color: INK_MUTED,
-          font: { family: '"Spline Sans Mono", monospace', size: 11 },
+          font: { family: '"JetBrains Mono", monospace', size: 11 },
         },
       },
       y: {
@@ -146,7 +147,7 @@ export default function Dashboard() {
         grid: { color: GRID },
         ticks: {
           color: INK_MUTED,
-          font: { family: '"Spline Sans Mono", monospace', size: 11 },
+          font: { family: '"JetBrains Mono", monospace', size: 11 },
           callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
@@ -197,8 +198,8 @@ export default function Dashboard() {
   const toneMap = {
     water: { color: WATER, bg: 'var(--water-tint)' },
     coral: { color: CORAL, bg: 'var(--coral-tint)' },
-    amber: { color: '#C07D22', bg: 'var(--amber-tint)' },
-    ink: { color: '#123332', bg: 'var(--mist-soft)' },
+    amber: { color: '#F5B84B', bg: 'var(--amber-tint)' },
+    ink: { color: '#E8EEF7', bg: 'var(--mist-soft)' },
   }
 
   return (
@@ -207,7 +208,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="eyebrow">Resumen · {monthLabel}</p>
-          <h1 className="mt-2 text-4xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+          <h1 className="mt-2 text-4xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>
             El flujo de tu mes
           </h1>
         </div>
@@ -228,7 +229,7 @@ export default function Dashboard() {
         <div className="flex items-start justify-between gap-6 flex-wrap mb-2">
           <div>
             <p className="eyebrow">Mapa de flujo</p>
-            <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+            <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>
               A dónde se va tu plata
             </h3>
           </div>
@@ -272,11 +273,11 @@ export default function Dashboard() {
           <p className="eyebrow">Balance neto del mes</p>
           <p
             className="fig mt-4 text-5xl xl:text-6xl font-semibold"
-            style={{ color: balance >= 0 ? '#123332' : '#C24E36' }}
+            style={{ color: balance >= 0 ? '#E8EEF7' : '#FF6B6B' }}
           >
             {formatCurrency(balance)}
           </p>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: balance >= 0 ? '#3A6A34' : '#C24E36', fontFamily: '"Spline Sans Mono", monospace' }}>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: balance >= 0 ? '#37D399' : '#FF6B6B', fontFamily: '"JetBrains Mono", monospace' }}>
             {balance >= 0 ? '▲ Positivo este mes' : '▼ Negativo este mes'}
           </p>
 
@@ -299,7 +300,7 @@ export default function Dashboard() {
           <div className="mt-6 w-full h-2.5 rounded-full bg-mist-soft border border-line overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #14666B, #22A0A6)' }}
+              style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #8FA8FF, #37D399)' }}
             />
           </div>
           <div className="mt-6 space-y-2.5 text-sm">
@@ -332,7 +333,7 @@ export default function Dashboard() {
               </div>
               <span className="w-2 h-2 rounded-full" style={{ background: toneMap[stat.tone].color }} />
             </div>
-            <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>
+            <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
               {stat.label}
             </p>
             <p className="fig mt-1 text-2xl font-semibold text-ink">{stat.value}</p>
@@ -346,16 +347,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="eyebrow">Evolución mensual</p>
-              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>Ingresos vs egresos</h3>
+              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>Ingresos vs egresos</h3>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: WATER }} />
-                <span className="text-xs text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>INGRESOS</span>
+                <span className="text-xs text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>INGRESOS</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: CORAL }} />
-                <span className="text-xs text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>EGRESOS</span>
+                <span className="text-xs text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>EGRESOS</span>
               </div>
             </div>
           </div>
@@ -387,11 +388,11 @@ export default function Dashboard() {
               <span className="fig font-semibold text-danger-600">{formatCurrency(totalExpenses)}</span>
             </div>
 
-            <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(160deg, #123332, #1B4744)', boxShadow: 'var(--shadow-md)' }}>
+            <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(160deg, #182146, #10151F)', border: '1px solid #233066' }}>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-paper/80">Balance neto</span>
                 <span className={`fig text-2xl font-semibold ${balance >= 0 ? 'text-emerald-300' : 'text-coral-light'}`}
-                  style={{ color: balance >= 0 ? '#9FD9B4' : '#F09A85' }}>
+                  style={{ color: balance >= 0 ? '#9FD9B4' : '#FF9A9A' }}>
                   {formatCurrency(balance)}
                 </span>
               </div>
@@ -403,7 +404,7 @@ export default function Dashboard() {
                 <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(246,243,236,0.15)' }}>
                   <div
                     className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #5FB8BC, #9FD9B4)' }}
+                    style={{ width: `${Math.min(100, Math.max(0, savingsRate))}%`, background: 'linear-gradient(90deg, #8FA8FF, #9FD9B4)' }}
                   />
                 </div>
               </div>
@@ -418,9 +419,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="eyebrow">Pasivo</p>
-              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>Estado de deudas</h3>
+              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>Estado de deudas</h3>
             </div>
-            <Link to="/debts" className="text-sm text-water-dark hover:text-water transition-colors" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>
+            <Link to="/debts" className="text-sm text-water-dark hover:text-water transition-colors" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
               ver todas →
             </Link>
           </div>
@@ -436,7 +437,7 @@ export default function Dashboard() {
                     <span className="fig text-xs text-ink-faint w-6">{String(index + 1).padStart(2, '0')}</span>
                     <div>
                       <p className="text-sm font-medium text-ink">{debt.name}</p>
-                      <p className="text-xs text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>{debt.bank}</p>
+                      <p className="text-xs text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>{debt.bank}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -458,9 +459,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="eyebrow">Activo</p>
-              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>Cuentas de ahorro</h3>
+              <h3 className="mt-1 text-xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>Cuentas de ahorro</h3>
             </div>
-            <Link to="/savings" className="text-sm text-water-dark hover:text-water transition-colors" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>
+            <Link to="/savings" className="text-sm text-water-dark hover:text-water transition-colors" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
               ver todas →
             </Link>
           </div>
@@ -478,7 +479,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-ink">{account.name}</p>
-                      <p className="text-xs text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>{account.bank}</p>
+                      <p className="text-xs text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>{account.bank}</p>
                     </div>
                   </div>
                   <div className="text-right">

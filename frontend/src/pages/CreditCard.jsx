@@ -120,12 +120,12 @@ export default function CreditCard() {
       {
         label: 'Saldo',
         data: chartMonths.map((m) => m.balance),
-        borderColor: '#1B8A8F',
+        borderColor: '11B8A8F',
         backgroundColor: 'rgba(27, 138, 143, 0.12)',
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#1B8A8F',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: '11B8A8F',
+        pointBorderColor: '1fff',
         pointBorderWidth: 2,
         pointRadius: 3,
       },
@@ -136,10 +136,10 @@ export default function CreditCard() {
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { grid: { display: false }, ticks: { color: '#7c8698', font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { color: '17c8698', font: { size: 11 } } },
       y: {
         grid: { color: 'rgba(0, 0, 0, 0.05)' },
-        ticks: { color: '#7c8698', font: { size: 11 }, callback: (v) => '$' + v.toLocaleString() },
+        ticks: { color: '17c8698', font: { size: 11 }, callback: (v) => '$' + v.toLocaleString() },
       },
     },
   }
@@ -174,14 +174,14 @@ export default function CreditCard() {
                   <button
                     type="button"
                     onClick={() => setMethod('linear')}
-                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${method === 'linear' ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-dark-600 border-dark-200 hover:bg-dark-50'}`}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${method === 'linear' ? 'bg-primary-500 text-white border-primary-500' : 'bg-dark-100 text-dark-600 border-dark-200 hover:bg-dark-200'}`}
                   >
                     Capital fijo
                   </button>
                   <button
                     type="button"
                     onClick={() => setMethod('annuity')}
-                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${method === 'annuity' ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-dark-600 border-dark-200 hover:bg-dark-50'}`}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${method === 'annuity' ? 'bg-primary-500 text-white border-primary-500' : 'bg-dark-100 text-dark-600 border-dark-200 hover:bg-dark-200'}`}
                   >
                     Cuota fija
                   </button>

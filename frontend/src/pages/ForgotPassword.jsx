@@ -8,9 +8,9 @@ function BrandMark() {
   return (
     <div
       className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border border-water-tint"
-      style={{ background: 'linear-gradient(140deg, #22A0A6, #14666B)', boxShadow: '0 6px 18px -8px rgba(27,138,143,0.5)' }}
+      style={{ background: 'linear-gradient(140deg, #6C8CFF, #37D399)', boxShadow: '0 6px 18px -8px rgba(27,138,143,0.5)' }}
     >
-      <span className="text-lg text-white leading-none font-bold" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+      <span className="text-lg text-white leading-none font-bold" style={{ fontFamily: '"Sora", sans-serif' }}>
         PF
       </span>
     </div>
@@ -67,8 +67,8 @@ export default function ForgotPassword() {
         <div className="flex items-center gap-3 mb-8">
           <BrandMark />
           <div className="leading-tight">
-            <span className="block text-xl font-semibold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>Portal Financiero</span>
-            <span className="block text-[10px] tracking-[0.2em] uppercase text-ink-muted" style={{ fontFamily: '"Spline Sans Mono", monospace' }}>Recuperar acceso</span>
+            <span className="block text-xl font-semibold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>Portal Financiero</span>
+            <span className="block text-[10px] tracking-[0.2em] uppercase text-ink-muted" style={{ fontFamily: '"JetBrains Mono", monospace' }}>Recuperar acceso</span>
           </div>
         </div>
 
@@ -80,7 +80,7 @@ export default function ForgotPassword() {
           {step === 1 ? (
             <>
               <p className="eyebrow mt-5">Recuperación</p>
-              <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+              <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>
                 Olvidé mi contraseña
               </h2>
               <p className="mt-2 text-sm text-ink-muted">
@@ -111,7 +111,7 @@ export default function ForgotPassword() {
           ) : (
             <>
               <p className="eyebrow mt-5">Último paso</p>
-              <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
+              <h2 className="mt-2 text-3xl font-bold text-ink" style={{ fontFamily: '"Sora", sans-serif' }}>
                 Nueva contraseña
               </h2>
               <p className="mt-2 text-sm text-ink-muted">

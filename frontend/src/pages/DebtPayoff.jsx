@@ -367,13 +367,13 @@ export default function DebtPayoff() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: '#8b95a8', font: { size: 10, family: '"IBM Plex Mono", monospace' }, maxRotation: 45 },
+        ticks: { color: '#8b95a8', font: { size: 10, family: '"JetBrains Mono", monospace' }, maxRotation: 45 },
       },
       y: {
         grid: { color: 'rgba(255, 255, 255, 0.05)' },
         ticks: {
           color: '#8b95a8',
-          font: { size: 11, family: '"IBM Plex Mono", monospace' },
+          font: { size: 11, family: '"JetBrains Mono", monospace' },
           callback: (value) => '$' + value.toLocaleString('es-CO'),
         },
       },
