@@ -44,6 +44,7 @@ app.use('/api/debts', require('./routes/debts'));
 app.use('/api/savings', require('./routes/savings'));
 app.use('/api/projections', require('./routes/projections'));
 app.use('/api/simulations', require('./routes/simulations'));
+app.use('/api/credit-card', require('./routes/creditCard'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/insights', require('./routes/insights'));
 

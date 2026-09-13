@@ -11,6 +11,7 @@ import DebtDetail from './pages/DebtDetail'
 import Savings from './pages/Savings'
 import SavingsDetail from './pages/SavingsDetail'
 import Calculator from './pages/Calculator'
+import CreditCard from './pages/CreditCard'
 import DebtPayoff from './pages/DebtPayoff'
 import Projections from './pages/Projections'
 import Simulator from './pages/Simulator'
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="savings" element={<Savings />} />
         <Route path="savings/:id" element={<SavingsDetail />} />
         <Route path="calculator" element={<Calculator />} />
+        <Route path="credit-card" element={<CreditCard />} />
         <Route path="debt-payoff" element={<DebtPayoff />} />
         <Route path="projections" element={<Projections />} />
         <Route path="simulator" element={<Simulator />} />

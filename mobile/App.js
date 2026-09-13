@@ -32,6 +32,7 @@ import Savings from './src/screens/Savings'
 import SavingsDetail from './src/screens/SavingsDetail'
 import Reports from './src/screens/Reports'
 import Calculator from './src/screens/Calculator'
+import CreditCard from './src/screens/CreditCard'
 import Projections from './src/screens/Projections'
 import Simulator from './src/screens/Simulator'
 import PaymentsHistory from './src/screens/PaymentsHistory'
@@ -76,6 +77,7 @@ function MoreStackScreen() {
       <MoreStack.Screen name="SavingsDetail" component={SavingsDetail} options={{ headerShown: false }} />
       <MoreStack.Screen name="Reports" component={Reports} options={{ headerShown: false }} />
       <MoreStack.Screen name="Calculator" component={Calculator} options={{ headerShown: false }} />
+      <MoreStack.Screen name="CreditCard" component={CreditCard} options={{ headerShown: false }} />
       <MoreStack.Screen name="Projections" component={Projections} options={{ headerShown: false }} />
       <MoreStack.Screen name="Simulator" component={Simulator} options={{ headerShown: false }} />
       <MoreStack.Screen name="Budgets" component={Budgets} options={{ headerShown: false }} />

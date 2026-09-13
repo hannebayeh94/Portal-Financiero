@@ -39,6 +39,7 @@ const navGroups = [
     label: 'Análisis',
     items: [
       { name: 'Calculadora', href: '/calculator', icon: CalculatorIcon },
+      { name: 'Tarjeta', href: '/credit-card', icon: CreditCardIcon },
       { name: 'Pago Deudas', href: '/debt-payoff', icon: CreditCardIcon },
       { name: 'Proyecciones', href: '/projections', icon: ChartBarIcon },
       { name: 'Simulador', href: '/simulator', icon: BeakerIcon },

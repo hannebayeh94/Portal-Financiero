@@ -77,12 +77,13 @@ Identidad visual unificada web + Android (reemplaza al anterior clay neumorphic 
 /savings    → GET, POST, PUT, DELETE
 /projections→ GET
 /simulations→ simulador engine (computeSimulation over real debts)
+/credit-card → POST   /plan (motor de compras cuotificadas: capital fijo + cuota fija, plan combinado)
 /reports    → GET   /cash-flow, /monthly-evolution, /expenses-by-category
 /insights   → GET   (observaciones proactivas: tendencia de gasto, tasa de ahorro, presupuestos, consejo de deudas, pagos próximos)
 /health     → GET   (liveness check)
 ```
 
-Backend domain logic in `backend/src/utils/`: `simulationEngine.js` (pure `computeSimulation(config, debts)`), `billingCycles.js` (`buildCycles` — cut-day/billing math), `defaultCategories.js`.
+Backend domain logic in `backend/src/utils/`: `simulationEngine.js` (pure `computeSimulation(config, debts)`), `creditCardEngine.js` (pure `computeCreditCardPlan(config)` — compras cuotificadas con capital fijo/`linear` o cuota fija/`annuity`), `billingCycles.js` (`buildCycles` — cut-day/billing math), `defaultCategories.js`.
 
 JWT token stored in `localStorage.getItem('token')` (frontend) or `AsyncStorage.getItem('token')` (mobile). 401 interceptor clears token and redirects to `/login`.
 
